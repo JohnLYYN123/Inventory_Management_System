@@ -30,7 +30,19 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 
 function Login(){
-    const [activeTab, setActiveTab] = useState("login")
+    const [activeTab, setActiveTab] = useState("login");
+
+    // shared state
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
+
+    // register-only state
+    const [username, setUsername] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [role, setRole] = useState("user");
+
+
     return (
         <div className="min-h-screen flex items-center justify-center px-4">
             <Card className="w-full max-w-[650px]">
