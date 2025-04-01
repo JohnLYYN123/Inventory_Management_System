@@ -44,11 +44,13 @@ function Login(){
 
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="min-h-screen flex items-center justify-center px-4 bg-gray-100">
             <Card className="w-full max-w-[650px]">
                 <CardHeader>
-                    <CardTitle className="text-3xl font-bold">Device Management</CardTitle>
-                    <CardDescription>Welcome back to your device dashboard</CardDescription>
+                    <div>
+                        <CardTitle className="text-3xl font-bold flex justify-center">Device Management</CardTitle>
+                        <CardDescription className="flex justify-center">Welcome back to your device dashboard</CardDescription>
+                    </div>
                     <div className="flex justify-center mt-4">
                         <Tabs defaultValue="login" className="w-[400px]">
                             <TabsList className="grid w-full grid-cols-2">
