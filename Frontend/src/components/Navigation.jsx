@@ -16,37 +16,39 @@ const navigation_link = [
 function NavigationBar() {
     const location = useLocation();
 
+
     return (
-        <nav className="w-full border-b bg-gray-100 shadow-sm">
-            <div className="flex items-center justify-between x-4 max-w-screen-xl mx-auto w-full px-8 py-3 flex items-center justify-between">
-            {/*Logo and Title */}
-            <div className="flex items-center space-x-6">
-                <img src={logo} alt="DeviceHub Logo" className="w-20 h-20 object-contain" />
-                <span className="text-xl font-semibold whitespace-nowrap">DeviceHub</span>
+        <nav className="w-full border-b bg-gray-50 shadow-sm">
+            <div className="flex items-center w-full max-w-screen-xl mx-auto">
+                {/* Left: Logo and Title */}
+                <div className="flex items-center space-x-4">
+                    <img src={logo} alt="DeviceHub Logo" className="w-20 h-20 object-contain" />
+                    <span className="text-2xl font-bold whitespace-nowrap">DeviceHub</span>
+                </div>
+            
+                {/* Center: Navigation Links */}
+                <div className="flex-grow flex justify-center space-x-6">
+                    {navigation_link.map((link) => (
+                    <Link
+                        key={link.name}
+                        to={link.path}
+                        className={cn(
+                        "text-lg font-medium transition-colors hover:text-blue-500"
+                        )}
+                    >
+                        {link.name}
+                    </Link>
+                    ))}
+                </div>
+            
+                {/* Right: Sign In */}
+                <div className="flex items-center space-x-2">
+                    <User className="w-10 h-10 text-muted-foreground" />
+                    <Link to="/login" className="text-lg font-medium hover:text-blue-500">
+                    Sign In
+                    </Link>
+                </div>
             </div>
-    
-            {/*Navigation Links */}
-            <div className="flex space-x-6 justify-center">
-                {navigation_link.map((link) => (
-                <Link
-                    key={link.name}
-                    to={link.path}
-                    className={cn(
-                    "text-lg font-medium transition-colors hover:text-blue-500"
-                    )}
-                >
-                    {link.name}
-                </Link>
-                ))}
-            </div>
-    
-            <div className="flex items-center space-x-6">
-                <User className="w-5 h-5 text-muted-foreground" />
-                <Link to="/login" className="text-sm font-medium hover:text-blue-500">
-                Sign In
-                </Link>
-            </div>
-        </div>
       </nav>
     )
 }
