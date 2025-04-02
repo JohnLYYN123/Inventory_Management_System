@@ -18,7 +18,7 @@ function NavigationBar() {
 
     return (
         <nav className="w-full border-b bg-gray-100 shadow-sm">
-            <div className="flex items-center justify-between x-4max-w-screen-xl mx-auto w-full px-8 py-3 flex items-center justify-between">
+            <div className="flex items-center justify-between x-4 max-w-screen-xl mx-auto w-full px-8 py-3 flex items-center justify-between">
             {/*Logo and Title */}
             <div className="flex items-center space-x-6">
                 <img src={logo} alt="DeviceHub Logo" className="w-20 h-20 object-contain" />
