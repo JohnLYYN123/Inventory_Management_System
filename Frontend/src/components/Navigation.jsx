@@ -8,8 +8,8 @@ import logo from "../assets/IMS_icon.png";
 import { User } from "lucide-react";
 
 const navigation_link = [
-    { name: "My Devices", path: "/"},
-    { name: "Requests Management", path: "/"},
+    { name: "My Devices", path: "/mydevices"},
+    { name: "Requests Management", path: "/requestmanagment"},
     { name: "Profile", path: "/login"}
 ];
 
@@ -19,9 +19,9 @@ function NavigationBar() {
 
     return (
         <nav className="w-full border-b bg-gray-50 shadow-sm">
-            <div className="flex items-center w-full max-w-screen-xl mx-auto">
+            <div className="flex items-center w-full max-w-screen space-x-6 mx-auto">
                 {/* Left: Logo and Title */}
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 ">
                     <img src={logo} alt="DeviceHub Logo" className="w-20 h-20 object-contain" />
                     <span className="text-2xl font-bold whitespace-nowrap">DeviceHub</span>
                 </div>

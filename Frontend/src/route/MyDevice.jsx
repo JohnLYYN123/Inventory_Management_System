@@ -12,7 +12,7 @@ const mockDevice = [
     { name: "Samsung Galaxy S25", type: "mobile", borrowed: "2025-03-12 03:30 PM" },
   ];
 
-const distribution = [
+const deviceDistribution = [
     { name: "Laptop", value: 3 },
     { name: "Mobile", value: 2 },
     { name: "Tablet", value: 1 },
@@ -21,16 +21,18 @@ const distribution = [
 function MyDevice() {
     const [message, setMessage] = useState(null);
     const [deviceList, setDeviceList] = useState([]);
+    const [distribution, setDistribution] = useState([]);
 
     useEffect(() => {
         setMessage("hello IMS");
         setDeviceList(mockDevice);
+        setDistribution(deviceDistribution);
     }, []); // empty dependency array → runs once after mount
 
     return(
         <div className="px-10 py-6">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">My Devices</h1>
+                <h1 className="text-2xl font-bold mt-4">My Devices</h1>
                 <Input placeholder="Search devices..." className="w-80" />
             </div>
 
@@ -48,11 +50,8 @@ function MyDevice() {
                     </Card>
                 )}
             </div>
-
-            <div className="px-10 py-6">
-                <h2 className="text-2xl font-bold mb-4">Device Distribution</h2>
-                <Donut data={distribution} />
-            </div>
+            <h2 className="text-2xl font-bold mb-4">Device Distribution</h2>
+            <Donut data={distribution} />
         </div>
     )
 }
