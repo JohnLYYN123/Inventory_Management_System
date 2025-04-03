@@ -7,12 +7,14 @@ import MyDevice from './route/MyDevice.jsx'
 import Login from './route/Login.jsx';
 import Layout from './route/Layout.jsx';
 import RequestManagement from './route/RequestManagement.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import Profile from './route/Profile.jsx';
 
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: <ProtectedRoute><Layout /></ProtectedRoute>,
     children: [
       {
         index: true,
@@ -25,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: '/requestmanagment', 
         element: <RequestManagement />
+      },
+      {
+        path: '/profile',
+        element: <Profile />
       },
     ]
   },

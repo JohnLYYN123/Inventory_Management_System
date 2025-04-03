@@ -10,7 +10,7 @@ import { User } from "lucide-react";
 const navigation_link = [
     { name: "My Devices", path: "/mydevices"},
     { name: "Requests Management", path: "/requestmanagment"},
-    { name: "Profile", path: "/login"}
+    { name: "Profile", path: "/profile"}
 ];
 
 function NavigationBar() {
@@ -41,12 +41,32 @@ function NavigationBar() {
                     ))}
                 </div>
             
-                {/* Right: Sign In */}
+                {/* Right: Sign In and Sign out*/}
                 <div className="flex items-center space-x-2">
                     <User className="w-10 h-10 text-muted-foreground" />
-                    <Link to="/login" className="text-lg font-medium hover:text-blue-500">
-                    Sign In
-                    </Link>
+                    {localStorage.getItem("user") ? (() => {
+                        const user = JSON.parse(localStorage.getItem("user"));
+                            return (
+                                <div className="flex items-center gap-5">
+                                    <span className="text-sm text-gray-700">
+                                        {user.email}
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            localStorage.removeItem("user");
+                                            window.location.href = "/login";
+                                        }}
+                                        className="text-sm font-medium text-red-500 hover:underline"
+                                    >
+                                        Sign out
+                                    </button>
+                                </div>
+                            );
+                        })() : (
+                            <Link to="/login" className="text-lg font-medium hover:text-blue-500">
+                                Sign In
+                            </Link>
+                        )}
                 </div>
             </div>
       </nav>
