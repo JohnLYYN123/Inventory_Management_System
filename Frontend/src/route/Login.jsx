@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // component imports
 import { Button } from "@/components/ui/button"
@@ -42,6 +43,24 @@ function Login(){
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState("user");
 
+    const navigate = useNavigate();
+
+    const handleLogin = () => {
+        const mockUser = {
+            email, 
+            token: "mock-token",
+            role: email === "admin" ? "admin" : "user"
+        };
+
+        if(!email || !password){
+            alert("Please enter your email and password");
+            return;
+        }
+
+        localStorage.setItem("user", JSON.stringify(mockUser));
+        navigate('/');
+    };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-gray-100">
@@ -69,6 +88,8 @@ function Login(){
                                             type="email" 
                                             placeholder="Enter your email" 
                                             className='pl-10'
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
                                         ></Input>
                                     </div>
                                 </div>
@@ -81,6 +102,7 @@ function Login(){
                                             type="password" 
                                             placeholder="Enter your password" 
                                             className='pl-10'
+                                            onChange={(e) => setPassword(e.target.value)}
                                         ></Input>
                                     </div>
                                 </div>
@@ -88,7 +110,7 @@ function Login(){
                                  {/* Remember Me & Forgot Password */}
                                 <div className="flex items-center justify-between mt-4">
                                     <div className="flex items-center space-x-2">
-                                        <Checkbox id="rememberMe" />
+                                        <Checkbox id="rememberMe" checked={rememberMe} onCheckedChange={setRememberMe} />
                                             <label
                                                 htmlFor="rememberMe"
                                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -105,7 +127,7 @@ function Login(){
                                 </div>
 
                                 <div className="w-full mt-4">
-                                    <Button className="w-full" variant="buttonBlue">Log In</Button>
+                                    <Button className="w-full" variant="buttonBlue" onClick={handleLogin}>Log In</Button>
                                 </div>
                             </TabsContent>
 
