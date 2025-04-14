@@ -96,7 +96,7 @@ function Login() {
       } else {
         const data = await response.json();
         localStorage.setItem("user", JSON.stringify(data));
-        navigate("/");
+        navigate("/mydevices");
       }
     } catch (error) {
       console.error("Error during login:", error);

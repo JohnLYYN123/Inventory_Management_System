@@ -1,14 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { RouterProvider, createBrowserRouter, Navigate } from "react-router-dom";
 import './index.css'
 // import App from './route/App.jsx'
-import MyDevice from './route/MyDevice.jsx'
 import Login from './route/Login.jsx';
 import Layout from './route/Layout.jsx';
 import RequestManagement from './route/RequestManagement.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Profile from './route/Profile.jsx';
+import MyDeviceRoutes from './route/MyDeviceRoutes.jsx';
 
 
 const router = createBrowserRouter([
@@ -18,11 +18,11 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <MyDevice />
+        element: <MyDeviceRoutes />,
       },
       {
         path: '/mydevices', 
-        element: <MyDevice />
+        element: <MyDeviceRoutes />
       },
       {
         path: '/requestmanagment', 
