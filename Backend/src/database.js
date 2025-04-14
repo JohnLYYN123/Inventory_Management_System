@@ -328,7 +328,7 @@ const dbOperations = {
 
   // Create new request
   // requestData includes:
-  // - status: RequestStatus
+  // - status: RequestStatus (Pending)
   // - requestorId: Int 
   // - deviceId: Int (if not available, throw an error)
   // - adminComment: string (optional) 
@@ -567,7 +567,7 @@ const dbOperations = {
   // - activity: Activity
   // - deviceId: int 
   // - executorId: int
-  getAllRequests: async (filters = {}) => {
+  getAllTransactions: async (filters = {}) => {
     try {
       const { activity, deviceId, executorId } = filters;
 
