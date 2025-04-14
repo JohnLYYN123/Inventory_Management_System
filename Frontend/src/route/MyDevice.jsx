@@ -22,6 +22,7 @@ function MyDevice() {
     const [message, setMessage] = useState(null);
     const [deviceList, setDeviceList] = useState([]);
     const [distribution, setDistribution] = useState([]);
+    const [searchedDevice, setSearchedDevice] = useState("");
 
     useEffect(() => {
         setMessage("hello IMS");
@@ -29,16 +30,27 @@ function MyDevice() {
         setDistribution(deviceDistribution);
     }, []); // empty dependency array → runs once after mount
 
+    // filter the list of devices based on the search user input 
+    const filteredDeviceList = deviceList.filter((device) => 
+        device.name.toLowerCase().includes(searchedDevice.toLowerCase())
+    );
+
     return(
         <div className="px-10 py-6">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold mt-4">My Devices</h1>
-                <Input placeholder="Search devices..." className="w-80" />
+                <Input 
+                    placeholder="Search devices..." 
+                    className="w-80" 
+                    type="text"
+                    value={searchedDevice}
+                    onChange={(e) => setSearchedDevice(e.target.value)}
+                    />
             </div>
 
             {/* Device card */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                {deviceList.map((device, idx) => 
+                {filteredDeviceList.map((device, idx) => 
                     <Card key={idx}>
                         <CardContent className="p-4">
                         <h2 className="text-md font-semibold">{device.name}</h2>
