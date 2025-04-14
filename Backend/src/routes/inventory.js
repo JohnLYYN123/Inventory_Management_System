@@ -3,15 +3,18 @@ const router = express.Router();
 const db = require("../database");
 const middleware = require("../middleware");
 
+// Standard response format helper
+const formatResponse = (data, message = "") => ({
+  success: true,
+  data,
+  message
+});
+
 // GET /api/inventory
 router.get("/", middleware.validateInventoryQueryParams, async (req, res, next) => {
   try {
     const inventories = await db.getAllInventories(req.query);
-    res.status(200).json({
-      deviceName: inventories.deviceName,
-      deviceStatus: inventories.status,
-      deviceTypeId: inventories.deviceTypeId,
-    });
+    res.status(200).json(formatResponse(inventories));
   } catch (error) {
     next(error);
   }
@@ -20,12 +23,11 @@ router.get("/", middleware.validateInventoryQueryParams, async (req, res, next) 
 // GET /api/inventory/:id
 router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
   try {
-    const inventories = await db.getInventoryById(parseInt(req.params.id));
-    if (!inventories) {
-      return res.status(404).json({error: "Inventory not found"});
-    } else {
-      return res.status(200).json(inventories);
+    const inventory = await db.getInventoryById(parseInt(req.params.id));
+    if (!inventory) {
+      return res.status(404).json(formatResponse(null, "Inventory not found"));
     }
+    return res.status(200).json(formatResponse(inventory));
   } catch (error) {
     next(error);
   }
@@ -34,15 +36,17 @@ router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
 // POST /api/inventory
 router.post("/", async (req, res, next) => {
   try {
-    const error = middleware.validateInventoryInput(req.body);
-    console.log(error);
-    if (error.length > 0) {
-      return res
-        .status(400)
-        .json({ error: "Validation Error", messages: error });
+    const errors = middleware.validateInventoryInput(req);
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        errors,
+        message: "Validation failed"
+      });
     }
-    let newInventory = await db.createInventory(req.body);
-    res.status(201).json(newInventory);
+    
+    const newInventory = await db.createInventory(req.body);
+    res.status(201).json(formatResponse(newInventory, "Inventory created"));
   } catch (error) {
     next(error);
   }
@@ -53,15 +57,22 @@ router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
   try {
     const errors = middleware.validateInventoryInput(req.body);
     if (errors.length > 0) {
-      return res.status(400).json({ error: "Validation Error", messages: errors });
+      return res.status(400).json({
+        success: false,
+        errors,
+        message: "Validation failed"
+      });
     }
-    req.params.id = parseInt(req.params.id);
-    const inventories = await db.getInventoryById(req.params.id);
-    if (!inventories) {
-      return res.status(404).json({ error: "Inventory not found" });
+
+    const inventoryId = parseInt(req.params.id);
+    const existingInventory = await db.getInventoryById(inventoryId);
+    
+    if (!existingInventory) {
+      return res.status(404).json(formatResponse(null, "Inventory not found"));
     }
-    const newInventory = await db.updateInventory(req.params.id, req.body);
-    return res.status(200).json(newInventory);
+
+    const updatedInventory = await db.updateInventory(inventoryId, req.body);
+    return res.status(200).json(formatResponse(updatedInventory, "Inventory updated"));
   } catch (error) {
     next(error);
   }
@@ -70,14 +81,15 @@ router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
 // DELETE /api/inventory/:id
 router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
   try {
-    req.params.id = parseInt(req.params.id);
-    const inventories = await db.getInventoryById(req.params.id);
-    if (!inventories) {
-      return res.status(404).json({ error: "Inventory not found" });
-    } else {
-      await db.deleteInventory(req.params.id);
-      return res.status(204).end();
+    const inventoryId = parseInt(req.params.id);
+    const existingInventory = await db.getInventoryById(inventoryId);
+    
+    if (!existingInventory) {
+      return res.status(404).json(formatResponse(null, "Inventory not found"));
     }
+
+    await db.deleteInventory(inventoryId);
+    return res.status(204).end();
   } catch (error) {
     next(error);
   }

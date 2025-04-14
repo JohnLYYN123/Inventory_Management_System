@@ -34,7 +34,7 @@ const validateResourceId = (req, res, next) => {
   next();
 };
 
-const validateInventoryInput = (req, res, next) => {
+const validateInventoryInput = (req) => {
   const { deviceName, status, deviceTypeId } = req.body;
   const errors = [];
 
@@ -50,21 +50,22 @@ const validateInventoryInput = (req, res, next) => {
     errors.push("Status cannot be empty or whitespace.");
   }
 
-  if (!deviceTypeId) {
-    errors.push("Device type ID is required.");
-  } else if (isNaN(deviceTypeId)) {
-    errors.push("Device type ID must be a number.");
-  }
-
   if (errors.length > 0) {
-    return res.status(400).json({ error: "Validation Error", messages: errors });
+    return errors;
+  } else {
+    return [];
   }
-
-  next();
 }
 
+const errorHandler = (err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Internal Server Error" });
+};
 
 module.exports = {
   requestLogger,
   validateInventoryQueryParams,
+  validateResourceId,
+  validateInventoryInput,
+  errorHandler
 };
