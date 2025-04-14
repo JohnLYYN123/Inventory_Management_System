@@ -46,10 +46,11 @@ function Login(){
     const navigate = useNavigate();
 
     const handleLogin = () => {
+        const role = email.toLowerCase().includes("admin") ? "admin" : "user";
         const mockUser = {
             email, 
             token: "mock-token",
-            role: email === "admin" ? "admin" : "user"
+            role
         };
 
         if(!email || !password){
@@ -57,8 +58,17 @@ function Login(){
             return;
         }
 
+        // new we need some logics
+        console.log(mockUser);
         localStorage.setItem("user", JSON.stringify(mockUser));
-        navigate('/');
+
+        if (rememberMe) {
+            localStorage.setItem("rememberMe", JSON.stringify(mockUser));
+        }
+
+        console.log("from log in", JSON.parse(localStorage.getItem("user")));
+
+        navigate("/mydevices");
     };
 
 
