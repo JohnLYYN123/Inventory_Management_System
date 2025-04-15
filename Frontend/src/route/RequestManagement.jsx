@@ -56,12 +56,12 @@ function RequestManagement(){
 
     const modeData = mode === "all" ? requests : requests.filter(item=> item.status === mode);
 
-    const handleWithdraw = (id) => {
+    const handleWithdraw = async (id) => {
         setRequests(prev => prev.filter(req => req.id !== id));
         setShowDialog(false);
       };
     
-    const handleSaveEdit = () => {
+    const handleSaveEdit = async () => {
     setRequests(prev =>
         prev.map(req =>
         req.id === curEditRequest.id ? curEditRequest : req
@@ -70,7 +70,7 @@ function RequestManagement(){
     setShowDialog(false);
     };
 
-    const addNewRequest = () => {
+    const addNewRequest = async () => {
         const newId = Math.max(...requests.map(r => r.id)) + 1;
         
         const newRequest = {

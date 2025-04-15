@@ -8,7 +8,7 @@ import logo from "../assets/IMS_icon.png";
 import { User } from "lucide-react";
 
 const navigation_link = [
-    { name: "My Devices", path: "/mydevices"},
+    { name: "Devices", path: "/mydevices"},
     { name: "Requests Management", path: "/requestmanagment"},
     { name: "Profile", path: "/profile"}
 ];

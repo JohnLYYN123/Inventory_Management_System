@@ -82,7 +82,7 @@ function AdminDevice() {
     const modeData = mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item=> item.status === mode.toLowerCase());
 
 
-    const handleAddingNewDevice = () => {
+    const handleAddingNewDevice = async () => {
         const newId = Number(inventoryDeviceList[inventoryDeviceList.length - 1].id) + 1;
         setNewDeviceInfo({ ...newDeviceInfo, device_id: newId });
         const device = {
@@ -103,7 +103,7 @@ function AdminDevice() {
         setShowNewDeviceDialog(false);
     }
 
-    const handleEditDevice = () => {
+    const handleEditDevice = async () => {
         setInventoryDeviceList(prev => 
             prev.map(req => 
                 req.id === editDeviceInfo.id ? editDeviceInfo : req

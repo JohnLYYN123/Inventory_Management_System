@@ -38,12 +38,12 @@ function Profile() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     
 
-    const handleSaveProfile = () => {
+    const handleSaveProfile = async () => {
         setProfile(editProfile);
         setIsEditingProfile(false);
     }
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (editPassword === confirmPassword) {
             setProfile({ ...profile, password: editPassword });
             setIsChangingPassword(false);
@@ -147,7 +147,7 @@ function Profile() {
                     </div>
                     <DialogFooter className="flex justify-end gap-2 mt-4">
                         <Button variant="ghost" onClick={() => setIsEditingProfile(false)}>Cancel</Button>
-                        <Button variant="destructive" onClick={handleSaveProfile}>Save</Button>
+                        <Button variant="buttonBlue" onClick={handleSaveProfile}>Save</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
