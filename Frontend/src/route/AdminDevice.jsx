@@ -86,7 +86,7 @@ function AdminDevice() {
         const newId = Number(inventoryDeviceList[inventoryDeviceList.length - 1].id) + 1;
         setNewDeviceInfo({ ...newDeviceInfo, device_id: newId });
         const device = {
-            id: String(newId), // make sure it's a string like your mock data
+            id: String(newId), 
             name: newDeviceInfo.name,
             type: newDeviceInfo.type,
             status: newDeviceInfo.status,
