@@ -73,6 +73,75 @@ const validateDeviceTypeInput = (req) => {
   }
 }
 
+const validateRequestQueryParams = (req, res, next) => {
+  const { status, requestorId, deviceId } = req.query;
+  const errors = [];
+
+  if (status) {
+    if (status !== "approved" && status !== "pending" && status !== "rejected") {
+      errors.push("Invalid status. Allowed values are 'approved', 'pending', 'rejected'.");
+    }
+  }
+
+  if (requestorId) {
+    if (isNaN(requestorId)) {
+      errors.push("Requestor ID must be a number.");
+    }
+  }
+
+  if (deviceId) {
+    if (isNaN(deviceId)) {
+      errors.push("Device ID must be a number.");
+    }
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+  next();
+}
+
+const validateRequestInput = (req) => {
+  const { status, requestorId, deviceId, adminComment, requestDetail } = req.body;
+  const errors = [];
+
+  if (!status) {
+    errors.push("Status is required.");
+  } else if (status !== "approved" && status !== "pending" && status !== "rejected") {
+    errors.push("Invalid status. Allowed values are 'approved', 'pending', 'rejected'.");
+  }
+
+  if (requestorId && !isNaN(requestorId)) {
+    console.log("Requestor ID is", requestorId);
+  } else {
+    errors.push("Requestor ID must be a number.");
+  }
+
+  if (!deviceId) {
+    errors.push("Device ID is required.");
+  } else if (isNaN(deviceId)) {
+    errors.push("Device ID must be a number.");
+  }
+
+  if (adminComment) {
+    if (isAllWhitespace(adminComment)) {
+      errors.push("Admin comment cannot be empty or whitespace.");
+    }
+  }
+
+  if (requestDetail) {
+    if (isAllWhitespace(requestDetail)) {
+      errors.push("Request detail cannot be empty or whitespace.");
+    }
+  }
+
+  if (errors.length > 0) {
+    return errors;
+  } else {
+    return [];
+  }
+}
+
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Internal Server Error" });
@@ -84,5 +153,7 @@ module.exports = {
   validateResourceId,
   validateInventoryInput,
   validateDeviceTypeInput,
+  validateRequestQueryParams,
+  validateRequestInput,
   errorHandler
 };
