@@ -3,19 +3,34 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import Donut from "../components/PieChart";
+import { Button } from "@/components/ui/button"
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogFooter,
+    DialogDescription,
 } from "@/components/ui/dialog";
+
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
+
+
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
+import { Pencil, ArchiveRestore, Trash2 } from "lucide-react";
 
 const mockDeviceInventory = [
-    { id: "DEV-2025-001", name: "MacBook Pro M3", type: "Laptop", status: "in-use", assignedTo: "james.wilson@company.com" },
-    { id: "DEV-2025-002", name: "iPhone 15 Pro", type: "Mobile", status: "available", assignedTo: "" },
-    { id: "DEV-2025-003", name: "Dell XPS 15", type: "Laptop", status: "retired", assignedTo: "" },
+    { id: "1", name: "MacBook Pro M3", type: "Laptop", status: "in-use", assignedTo: "james.wilson@company.com" },
+    { id: "2", name: "iPhone 15 Pro", type: "Mobile", status: "available", assignedTo: "" },
+    { id: "3", name: "Dell XPS 15", type: "Laptop", status: "retired", assignedTo: "" },
 ];
 
 const mockDevice = [
@@ -34,18 +49,300 @@ const deviceDistribution = [
 ];
 
 function AdminDevice() {
+    // for the toggle switch ops
     const [showMyDeviceList, setShowMyDeviceList] = useState(false);
 
-    // for inventory list
+    // for my device list
     const [myDeviceList, setMyDeviceList] = useState(mockDevice);
-
-
-    // for personal devices
-    const [inventoryDeviceList, setInventoryDeviceList] = useState(mockDeviceInventory);
     const [distribution, setDistribution] = useState(deviceDistribution);
     const [searchedDevice, setSearchedDevice] = useState("");
 
-    return (<h1>welcome back admin</h1>)
+    const filteredDeviceList = myDeviceList.filter((device) => 
+        device.name.toLowerCase().includes(searchedDevice.toLowerCase())
+    );
+
+    // for inventorys devices
+    const [inventoryDeviceList, setInventoryDeviceList] = useState(mockDeviceInventory);
+    const [newInventoryDevice, setNewInventoryDevice] = useState("");
+    const [mode, setMode] = useState("all");
+
+    // for new inventory device dialog
+    const [showNewDeviceDialog, setShowNewDeviceDialog] = useState(false);
+    const [newDeviceInfo, setNewDeviceInfo] = useState({
+        id: "",
+        name:"", 
+        type: "",
+        status: "available", 
+        assignedTo: ""
+    });
+
+    const [editDeviceDialog, setEditDeviceDialog] = useState(false);
+    const [editDeviceInfo, setEditDeviceInfo] = useState(null);
+    
+    const modeData = mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item=> item.status === mode.toLowerCase());
+
+
+    const handleAddingNewDevice = () => {
+        const newId = Number(inventoryDeviceList[inventoryDeviceList.length - 1].id) + 1;
+        setNewDeviceInfo({ ...newDeviceInfo, device_id: newId });
+        const device = {
+            id: String(newId), // make sure it's a string like your mock data
+            name: newDeviceInfo.name,
+            type: newDeviceInfo.type,
+            status: newDeviceInfo.status,
+            assignedTo: newDeviceInfo.assignedTo,
+          };
+        
+        setInventoryDeviceList(prev => [...prev, device]);
+        setNewDeviceInfo({
+            name:"", 
+            type: "",
+            status: "available", 
+            assignedTo: ""
+        });
+        setShowNewDeviceDialog(false);
+    }
+
+    const handleEditDevice = () => {
+        setInventoryDeviceList(prev => 
+            prev.map(req => 
+                req.id === editDeviceInfo.id ? editDeviceInfo : req
+            )
+        );
+        setEditDeviceDialog(false);
+    }
+
+
+   
+
+    return (
+        <div className="px-10 py-3">
+            <div className="flex items-center justify-between mb-6">
+                <div className="items-center space-x-2">
+                    <Label htmlFor="switch" className="text-4xl font-bold mt-4">Admin Devices Management</Label>
+                    <span className="text-md font-medium px-4">Inventory List</span>
+                    <Switch 
+                        id="switch"
+                        checked={showMyDeviceList}
+                        onCheckedChange={(checked) => setShowMyDeviceList(checked)}
+                        className="mt-4 scale-130 data-[state=checked]:bg-green-500"
+                    />
+                    <span className="text-md font-medium px-4">My Device List</span>
+                </div>
+            </div>
+
+            {/** toggle display switchs */}
+            {showMyDeviceList ? (
+                <div>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold mt-4">My Devices</h2>
+                        <Input 
+                            placeholder="Search devices..." 
+                            className="w-80" 
+                            type="text"
+                            value={searchedDevice}
+                            onChange={(e) => setSearchedDevice(e.target.value)}
+                            />
+                    </div>
+
+                    {/* Device card */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                        {filteredDeviceList.map((device, idx) => 
+                            <Card key={idx}>
+                                <CardContent className="p-4">
+                                <h2 className="text-md font-semibold">{device.name}</h2>
+                                <p className="text-sm text-muted-foreground">{device.type}</p>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    Borrowed since: {device.borrowed}
+                                </p>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                    <h2 className="text-2xl font-bold mb-4">Device Distribution</h2>
+                    <Donut data={distribution} />
+
+                </div>
+            ) : (
+                <div>
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-2xl font-bold mt-4">Inventory Device Management</h1>
+                        <div className="w-1/6">
+                            <Dialog open={showNewDeviceDialog} onOpenChange={setShowNewDeviceDialog}>
+                                
+                                <Button variant="buttonBlue" className="w-full" onClick={() => setShowNewDeviceDialog(true)}> 
+                                    + New Device
+                                </Button>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Adding a New Device</DialogTitle>
+                                        <DialogDescription>Please fill in the information of the new device</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-3">
+                                        <Label htmlFor="deviceName">Device Name</Label>
+                                        <Input 
+                                            id="deviceName"
+                                            value={newDeviceInfo.name}
+                                            onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, name: e.target.value })}
+                                            placeholder="Please enter device name"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3 mt-4">
+                                        <Label htmlFor="deviceType">Device Type</Label>
+                                        <Input 
+                                            id="deviceType"
+                                            value={newDeviceInfo.type}
+                                            onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, type: e.target.value })}
+                                            placeholder="Please enter device type"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3 mt-4">
+                                        <Label htmlFor="deviceStatus">Device Status</Label>
+                                        <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, status: value })}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select a device status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="available">Available</SelectItem>
+                                                <SelectItem value="in-use">In Use</SelectItem>
+                                                <SelectItem value="retired">Retired</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-3 mt-4">
+                                        <Label htmlFor="assignedTo">Assigned To</Label>
+                                        <Input 
+                                            id="assignedTo"
+                                            value={newDeviceInfo.assignedTo}
+                                            onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, assignedTo: e.target.value })}
+                                            placeholder="Please enter the email of the person assigned to this device"
+                                        />
+                                    </div>
+
+                                    <DialogFooter className="flex justify-end gap-2 mt-4">
+                                        <Button variant="ghost" onClick={() => setShowNewDeviceDialog(false)}>Cancel</Button>
+                                        <Button variant="buttonBlue" onClick={() => {handleAddingNewDevice();}}>
+                                            Add
+                                        </Button>
+                                    </DialogFooter>   
+                                </DialogContent>
+                            </Dialog>  
+                        </div>
+                    </div>
+                    <div className="flex gap-2 mb-4">
+                        {["all", "Available", "In-Use", "Retired"].map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setMode(f)}
+                            className={`px-4 py-1 rounded-md border ${
+                            mode === f ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+                            }`}
+                        >
+                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                        </button>
+                        ))}
+                    </div>
+                    <table className="min-w-full table-auto boarder-collapse">
+                        {/* table row heads */}
+                        <thead>
+                            <tr className="text-left text-sm font-semibold text-gray-700 border-b">
+                                <th className="p-3">Device ID</th>
+                                <th className="p-3">Name</th>
+                                <th className="p-3">Type</th>
+                                <th className="p-3">Status</th>
+                                <th className="p-3">Assigned To</th>
+                                <th className="p-3">Actions</th>
+                            </tr>
+                        </thead>
+                        {/* table stuffing */}
+                        <tbody>
+                            {modeData.map((req) => (
+                                <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
+                                    <td className="p-3">{req.id}</td>
+                                    <td className="p-3">{req.name}</td>
+                                    <td className="p-3">{req.type}</td>
+                                    <td className="p-3">
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${req.status === "available" ? "bg-green-100 text-green-800" : req.status === "in-use" ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"}`}
+                                        >
+                                            {req.status}
+                                        </span>
+                                    </td>
+                                    <td className="p-3">{req.assignedTo}</td>
+                                    <td className="p-3 flex items-center gap-2">
+                                        <Pencil 
+                                            size={18}
+                                            className="text-blue-500 cursor-pointer"
+                                            onClick={() => {
+                                                setEditDeviceInfo({...req});
+                                                setEditDeviceDialog(true);
+                                                }   
+                                            }
+                                        />
+                                    </td>   
+
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {editDeviceDialog && (
+                        <Dialog open={editDeviceDialog} onOpenChange={setEditDeviceDialog}>
+                        <DialogContent>
+                            <DialogHeader>
+                            <DialogTitle>Editing Device</DialogTitle>
+                            <DialogDescription>Please be cautious the upcoming operations</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-3">
+                                <Label htmlFor="deviceName">Device Name</Label>
+                                <Input
+                                    value={editDeviceInfo.name}
+                                    onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, name: e.target.value })}
+                                    placeholder="Please enter the new device name"
+                                />
+
+                                <Label htmlFor="deviceType">Device Type</Label>
+                                <Input
+                                    value={editDeviceInfo.type}
+                                    onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, type: e.target.value })}
+                                    placeholder="Please enter the new device type"
+                                />
+
+                                <Label htmlFor="deviceStatus">Device Status</Label>
+                                <Select value={editDeviceInfo.status} onValueChange={(value) => setEditDeviceInfo({ ...editDeviceInfo, status: value })}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a device status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="available">Available</SelectItem>
+                                        <SelectItem value="in-use">In Use</SelectItem>
+                                        <SelectItem value="retired">Retired</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Label htmlFor="assignedTo">Assigned To</Label>
+                                <Input
+                                    value={editDeviceInfo.assignedTo}
+                                    onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, assignedTo: e.target.value })}
+                                    placeholder="Please enter the email of the person assigned to this device"
+                                />
+                            </div>
+                            <DialogFooter className="flex justify-end gap-2 mt-4">
+                            <Button variant="ghost" onClick={() => setEditDeviceDialog(false)}>Cancel</Button>
+                            <Button variant="buttonBlue" onClick={() => {handleEditDevice();}}>
+                                Save
+                            </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                        </Dialog>
+                    )}
+                </div>
+            )}
+        </div>
+
+    );
 }
 
 
