@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../database');
 const s3 = require('../utils/doSpaces');
 const sharp = require('sharp')
-const upload = require('../middlewares/upload');
+const { upload } = require('../middlewares/upload');
 
 const formatResponse = (data, message = "") => ({
     success: true,
@@ -45,3 +45,5 @@ router.post('/upload/:deviceId/:transactionId/:activity', upload.single('file'),
 
 
 })
+
+module.exports = router;
