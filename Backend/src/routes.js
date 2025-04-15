@@ -19,7 +19,7 @@ const inventoryRoutes = require("./routes/inventory");
 // - GET /api/authors/1 → handled by routes/authors.js GET '/:id'
 
 // Mount routes
-//router.use("/devicetype", devicetypeRoutes);
+router.use("/devicetype", devicetypeRoutes);
 router.use("/inventory", inventoryRoutes);
 
 module.exports = router;

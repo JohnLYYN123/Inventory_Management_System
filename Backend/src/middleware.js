@@ -57,6 +57,22 @@ const validateInventoryInput = (req) => {
   }
 }
 
+const validateDeviceTypeInput = (req) => {
+  const { deviceType } = req.body;
+  const errors = [];
+  if (!deviceType) {
+    errors.push("Device type is required.");
+  } else if (isAllWhitespace(deviceType)) {
+    errors.push("Device type cannot be empty or whitespace.");
+  }
+
+  if (errors.length > 0) {
+    return errors;
+  } else {
+    return [];
+  }
+}
+
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Internal Server Error" });
@@ -67,5 +83,6 @@ module.exports = {
   validateInventoryQueryParams,
   validateResourceId,
   validateInventoryInput,
+  validateDeviceTypeInput,
   errorHandler
 };
