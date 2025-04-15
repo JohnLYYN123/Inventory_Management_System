@@ -1,469 +1,215 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const bcrypt = require("bcrypt");
 
+// TODO: Implement these database operations
 const dbOperations = {
-  //----------- User Functions ----------------------
-
-  // Register
-  /*userData includes:
-    - userName     
-    - email       
-    - department   
-    - location     
-    - displayName  
-    - password     
-    - role         
-  */
-  createUser: async (userData) => {
+  createPaper: async (paperData) => {
     try {
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-      const user = await prisma.user.create({
-        data: {
-          userName: userData.userName,
-          email: userData.email,
-          department: userData.department,
-          location: userData.location,
-          displayName: userData.displayName,
-          password: hashedPassword,
-          role: userData.role,
-        }
-      });
-
-      return user;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Get user by id
-  // Include requests and transactions in the response
-  getUserById: async (id) => {
-    try {
-      return await prisma.user.findUnique({
-        where: { id },
-        include: {
-          requests: true,
-          transactions: true,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Reset password
-  resetPassword: async (email, newPassword) => {
-    try {
-      const hashed = await bcrypt.hash(newPassword, 10);
-      return await prisma.user.update({
-        where: { email },
-        data: { password: hashed },
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  //----------- DeviceType Functions ----------------------
-
-  // Get all device types with filters
-  // Include inventories in the response
-  // filters can include:
-  // - deviceType: string (case-insensitive, partial match)
-  getAllDeviceTypes: async (filters = {}) => {
-    try {
-      const { deviceType } = filters;
-
-      const whereClause = {
-        deviceType: deviceType ? { contains: deviceType, mode: "insensitive" } : undefined,
-      };
-
-      return await prisma.deviceType.findMany({
-        where: whereClause,
-        include: { inventories: true },
-      });
-
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Get device type by Id
-  getDeviceTypeById: async (id) => {
-    try {
-      return await prisma.deviceType.findUnique({
-        where: { id },
-        include: { inventories: true },
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Create new device type
-  // deviceTypeData includes:
-  // - deviceType: string        
-  createDeviceType: async (deviceTypeData) => {
-    try {
-      const deviceType = await prisma.deviceType.create({
-        data: {
-          deviceType: deviceTypeData.deviceType,
-        }
-      });
-
-      return deviceType;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Update device type
-  // deviceTypeData includes:
-  // - deviceType:  string
-  // - inventories: array of inventory objects
-  // For each inventory in deviceTypeData.inventories:
-  //    - First try to find an existing inventory with matching id and name,
-  //    - If not found, throw an error
-  updateDeviceType: async (id, deviceTypeData) => {
-    try {
-      const inventories = await Promise.all(
-        deviceTypeData.inventories.map(async (inventory) => {
-          let existingInventory = await prisma.inventory.findFirst({
-            where: {
-              id: inventory.id,
-              deviceName: inventory.deviceName,
-            },
+      // TODO: Implement paper creation
+      //
+      // paperData includes:
+      // - title: string
+      // - publishedIn: string
+      // - year: number
+      // - authors: array of author objects
+      //   each author has:
+      //   - name: string
+      //   - email: string (optional)
+      //   - affiliation: string (optional)
+      //
+      // Steps:
+      // 1. For each author in paperData.authors:
+      //    - First try to find an existing author with matching name, email, and affiliation
+      //    - If not found, create a new author
+      // 2. Create the paper and connect it with the authors
+      // 3. Make sure to include authors in the response
+      //
+      // Hint: Use prisma.author.findFirst() to find existing authors
+      // and prisma.paper.create() with { connect: [...] } to connect authors
+      let authorId = [];
+      for (let author of paperData.authors) {
+        let existingAuthor = await prisma.author.findFirst({
+          where: {
+            name: author.name,
+            email: author.email,
+            affiliation: author.affiliation,
+          },
+        });
+        if (!existingAuthor) {
+          const newAuthor = await prisma.author.create({
+            data: author,
           });
-
-          if (!existingInventory) {
-            throw new error("Inventory not found");
-          }
-          return existingInventory;
-        })
-      );
-
-      return await prisma.deviceType.update({
-        where: { id },
+          authorId.push({ id: newAuthor.id });
+        }
+        else {
+          authorId.push({ id: existingAuthor.id });
+        }
+      }
+      
+      let result = await prisma.paper.create({
         data: {
-          deviceType: deviceTypeData.deviceType,
-          inventories: {
-            set: [],
-            connect: inventories.map((inv) => ({ id: inv.id })),
+          title: paperData.title,
+          publishedIn: paperData.publishedIn,
+          year: paperData.year,
+          authors: {
+            connect: authorId,
           },
         },
-        include: { inventories: true },
+        include: { authors: true },
       });
+      return result;
     } catch (error) {
       throw error;
     }
   },
 
-  // Delete device type
-  deleteDeviceType: async (id) => {
+  getAllPapers: async (filters = {}) => {
     try {
-      await prisma.deviceType.delete({ where: { id } });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  //----------- Inventory Functions ----------------------
-
-  // Get all inventories with filters
-  // Include requests and transactions in the response
-  // filters can include:
-  // - deviceName: string (case-insensitive, partial match)
-  // - status: Status
-  // - deviceTypeId: Int
-  getAllInventories: async (filters = {}) => {
-    try {
-      const { deviceName, status, deviceTypeId } = filters;
-
-      const whereClause = {
-        deviceName: deviceName ? { contains: deviceName, mode: "insensitive" } : undefined,
-        status: status || undefined,
-        deviceTypeId: deviceTypeId || undefined,
+      // TODO: Implement getting all papers with filters
+      //
+      // filters can include:
+      // - year: number
+      // - publishedIn: string (partial match)
+      // - author: string (partial match)
+      // - limit: number (default: 10)
+      // - offset: number (default: 0)
+      //
+      // Use await prisma.paper.findMany()
+      // Include authors in the response
+      // Return { papers, total, limit, offset }
+      let whereClause = {
+        year: filters.year,
+        publishedIn: {
+          contains: filters.published_in,
+          mode: "insensitive",
+        },
       };
-
-      return await prisma.inventory.findMany({
+      let authorArray = [];
+      if (filters.author) {
+        authorArray = Array.isArray(filters.author) ? filters.author : [filters.author];
+      }
+      if (authorArray.length > 0) {
+        whereClause.authors = {
+          some: {
+            OR: authorArray.map((authorName) => ({
+              name: {
+                contains: authorName,
+                mode: "insensitive",
+              },
+            })),
+          },
+        };
+      }
+      const papers = await prisma.paper.findMany({
         where: whereClause,
-        include: {
-          requests: true,
-          transactions: true,
+        include: { authors: true },
+        skip: filters.offset,
+        take: filters.limit,
+        orderBy: {
+          id: "asc",
         },
       });
-
+      return {papers, total: papers.length, limit: filters.limit, offset: filters.offset};
     } catch (error) {
       throw error;
     }
   },
 
-  // Get inventory by Id
-  getInventoryById: async (id) => {
+  getPaperById: async (id) => {
     try {
-      return await prisma.inventory.findUnique({
-        where: { id },
-        include: {
-          requests: true,
-          transactions: true,
+      // TODO: Implement getting paper by ID
+      //
+      // Use await prisma.paper.findUnique()
+      // Include authors in the response
+      // Return null if not found
+      const paperId = await prisma.paper.findUnique({
+        where: {
+          id: id,
         },
+        include: { authors: true },
       });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Create new inventory
-  // inventoryData includes:
-  // - deviceName: string  
-  // - status: Status  
-  // - deviceTypeId: int        
-  createInventory: async (inventoryData) => {
-    try {
-      const inventory = await prisma.inventory.create({
-        data: {
-          deviceName: inventoryData.deviceName,
-          status: inventoryData.status,
-          deviceTypeId: inventoryData.deviceTypeId,
-        },
-        include: { deviceType: true },
-      });
-
-      return inventory;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Updata inventory
-  // inventoryData includes:
-  // - deviceName: string  
-  // - status: Status  
-  // - deviceTypeId: int 
-  // - requests: optional
-  // - transactions: optional
-  // For each item in inventoryData.deviceType/requests/transactions:
-  //    - First try to find an existing item with matching id,
-  //    - If not found, throw an error
-  updateInventory: async (id, inventoryData) => {
-    try {
-      const deviceType = await prisma.deviceType.findUnique({
-        where: { id: inventoryData.deviceTypeId },
-      });
-
-      if (!deviceType) {
-        throw new Error("DeviceType not found");
+      if (!paperId) {
+        return null;
       }
-
-      if (inventoryData.requests) {
-        await Promise.all(
-          inventoryData.requests.map(async (req) => {
-            const existing = await prisma.request.findUnique({
-              where: { id: req.id },
-            });
-            if (!existing) {
-              throw new Error(`Request with id ${req.id} not found.`);
-            }
-          })
-        );
-      }
-
-      if (inventoryData.transactions) {
-        await Promise.all(
-          inventoryData.transactions.map(async (txn) => {
-            const existing = await prisma.transaction.findUnique({
-              where: { id: txn.id },
-            });
-            if (!existing) {
-              throw new Error(`Transaction with id ${txn.id} not found.`);
-            }
-          })
-        );
-      }
-
-      // Perform update
-      const updated = await prisma.inventory.update({
-        where: { id: Number(id) },
-        data: {
-          deviceName: inventoryData.deviceName,
-          status: inventoryData.status,
-          deviceTypeId: inventoryData.deviceTypeId,
-          requests: inventoryData.requests
-            ? {
-              set: [],
-              connect: inventoryData.requests.map((r) => ({ id: r.id })),
-            }
-            : undefined,
-          transactions: inventoryData.transactions
-            ? {
-              set: [],
-              connect: inventoryData.transactions.map((t) => ({ id: t.id })),
-            }
-            : undefined,
-        },
-        include: {
-          deviceType: true,
-          requests: true,
-          transactions: true,
-        },
-      });
-
-      return updated;
+      return paperId;
     } catch (error) {
       throw error;
     }
   },
 
-  // Delete device type
-  deleteInventory: async (id) => {
+  updatePaper: async (id, paperData) => {
     try {
-      await prisma.inventory.delete({ where: { id } });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  //----------- Request Functions ----------------------
-
-  // Create new request
-  // requestData includes:
-  // - status: RequestStatus (Pending)
-  // - requestorId: Int 
-  // - deviceId: Int (if not available, throw an error)
-  // - adminComment: string (optional) 
-  // - requestDetail: string (optional)
-
-  createRequest: async (requestData) => {
-    try {
-      const device = await prisma.inventory.findUnique({
-        where: { id: requestData.deviceId },
-      });
-
-      if (!device) {
-        throw new Error("Device not found");
-      } else if (device.status !== "Available") {
-        throw new Error("Device is not available")
-      }
-
-      const request = await prisma.request.create({
-        data: {
-          status: requestData.status,
-          requestorId: requestData.requestorId,
-          deviceId: requestData.deviceId,
-          adminComment: requestData.adminComment,
-          requestDetail: requestData.requestDetail,
-        },
-        include: {
-          requestor: true,
-          device: true,
-        },
-      });
-
-      return request;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Get request by Id
-  getRequestById: async (id) => {
-    try {
-      return await prisma.request.findUnique({
-        where: { id },
-        include: {
-          requestor: true,
-          device: true,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Get all requests with filters
-  // Include requestor and device in the response
-  // filters can include:
-  // - status: RequestStatus
-  // - requestorId: Int 
-  // - deviceId: Int
-  getAllRequests: async (filters = {}) => {
-    try {
-      const { status, requestorId, deviceId } = filters;
-
-      const whereClause = {
-        status: status || undefined,
-        requestorId: requestorId || undefined,
-        deviceId: deviceId || undefined,
-      };
-
-      return await prisma.inventory.findMany({
-        where: whereClause,
-        include: {
-          requestor: true,
-          device: true,
-        },
-      });
-
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Updata request
-  // requestData includes:
-  // - requestDetail: string (optional)  
-  // - deviceId: Int 
-  // request status -> Pending 
-  // device status: new device->Pending; previous device->Available
-  // For requestData.device:
-  //    - First try to find an existing item with matching id,
-  //    - If not found, throw an error
-  //    - If the device is not available, throw an error
-  updateRequest: async (id, requestData) => {
-    try {
-      const existingRequest = await prisma.request.findUnique({
-        where: { id: Number(id) },
-      });
-
-      if (!existingRequest) {
-        throw new Error("Request not found");
-      }
-
-      const newDeviceId = requestData.deviceId;
-      const oldDeviceId = existingRequest.deviceId;
-
-      if (newDeviceId !== oldDeviceId) {
-        const newDevice = await prisma.inventory.findUnique({
-          where: { id: newDeviceId },
+      // TODO: Implement paper update
+      //
+      // paperData includes:
+      // - title: string
+      // - publishedIn: string
+      // - year: number
+      // - authors: array of author objects
+      //   each author has:
+      //   - name: string
+      //   - email: string (optional)
+      //   - affiliation: string (optional)
+      //
+      // Steps:
+      // 1. For each author in paperData.authors:
+      //    - First try to find an existing author with matching name, email, and affiliation
+      //    - If not found, create a new author
+      // 2. Update the paper with new field values
+      // 3. Replace all author relationships with the new set of authors
+      // 4. Make sure to include authors in the response
+      //
+      // Hint: Use prisma.author.findFirst() to find existing authors
+      // and prisma.paper.update() with authors: { set: [], connect: [...] }
+      // to replace author relationships
+      const authorId = [];
+      for (let author of paperData.authors) {
+        let existingAuthor = await prisma.author.findFirst({
+          where: {
+            name: author.name,
+            email: author.email,
+            affiliation: author.affiliation,
+          },
         });
-
-        if (!newDevice) {
-          throw new Error("Device not found");
-        } else if (newDevice.status !== "Available") {
-          throw new Error("Device is not available")
+        if (!existingAuthor) {
+          const newAuthor = await prisma.author.create({
+            data: author,
+          });
+          authorId.push({ id: newAuthor.id });
+        } else {
+          authorId.push({ id: existingAuthor.id });
         }
-
-        await prisma.inventory.update({
-          where: { id: oldDeviceId },
-          data: { status: "Available" },
-        });
-
-        await prisma.inventory.update({
-          where: { id: newDeviceId },
-          data: { status: "Pending" },
-        });
       }
-      return await prisma.request.update({
-        where: { id: Number(id) },
+      const updatePaper = await prisma.paper.update({
+        where: {
+          id: id,
+        },
         data: {
-          requestDetail: requestData.requestDetail || undefined,
-          deviceId: requestData.deviceId,
-          status: "Pending",
+          title: paperData.title,
+          publishedIn: paperData.publishedIn,
+          year: paperData.year,
+          authors: {
+            set: [],
+            connect: authorId,
+          },
         },
-        include: {
-          requestor: true,
-          device: true,
+        include: { authors: true },
+      });
+      return updatePaper;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deletePaper: async (id) => {
+    try {
+      // TODO: Implement paper deletion
+      //
+      // Use await prisma.paper.delete()
+      // Return nothing (undefined)
+      await prisma.paper.delete({
+        where: {
+          id: id,
         },
       });
     } catch (error) {
@@ -471,159 +217,154 @@ const dbOperations = {
     }
   },
 
-  // Delete request
-  deleteRequest: async (id) => {
+  // Author Operations
+  createAuthor: async (authorData) => {
     try {
-      await prisma.request.delete({ where: { id } });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Approve request
-  approveRequest: async (id, adminComment) => {
-    try {
-      const request = await prisma.request.update({
-        where: { id: Number(id) },
-        data: { status: "Completed", adminComment },
-        include: { device: true },
-      });
-      await prisma.inventory.update({ where: { id: request.deviceId }, data: { status: "Unavailable" } });
-      await prisma.transaction.create({
+      // TODO: Implement author creation
+      //
+      // authorData includes:
+      // - name: string
+      // - email: string (optional)
+      // - affiliation: string (optional)
+      //
+      // Use await prisma.author.create()
+      // Return the created author
+      const newAuthor = await prisma.author.create({
         data: {
-          deviceId: request.deviceId,
-          executorId: request.requestorId,
-          activity: "Borrow",
+          name: authorData.name,
+          email: authorData.email,
+          affiliation: authorData.affiliation,
         },
       });
-      return request;
+      return newAuthor;
     } catch (error) {
       throw error;
     }
   },
 
-  // Reject requet
-  rejectRequest: async (id, adminComment) => {
+  getAllAuthors: async (filters = {}) => {
     try {
-      const request = await prisma.request.update({
-        where: { id: Number(id) },
-        data: { status: "Denied", adminComment },
-        include: { device: true },
+      // TODO: Implement getting all authors with filters
+      //
+      // filters can include:
+      // - name: string (partial match)
+      // - affiliation: string (partial match)
+      // - limit: number (default: 10)
+      // - offset: number (default: 0)
+      //
+      // Use await prisma.author.findMany()
+      // Include papers in the response
+      // Return { authors, total, limit, offset }
+      const getAuthers = await prisma.author.findMany({
+        where: {
+          name: {
+            contains: filters.name,
+            mode: "insensitive",
+          },
+          affiliation: {
+            contains: filters.affiliation,
+            mode: "insensitive",
+          },
+        },
+        include: { papers: true },
+        skip: filters.offset,
+        take: filters.limit,
       });
-      await prisma.inventory.update({ where: { id: request.deviceId }, data: { status: "Available" } });
-      return request;
+      return { authors: getAuthers, total: getAuthers.length, limit: filters.limit, offset: filters.offset };
     } catch (error) {
       throw error;
     }
   },
 
-  //----------- Transaction Functions ----------------------
-
-  // Create new transaction
-  // tsnData includes:
-  // - activity: Activity
-  // - deviceId: int 
-  // - executorId: int
-  // - comment: string (optional) 
-  createTransaction: async (tsnData) => {
+  getAuthorById: async (id) => {
     try {
-      const transaction = await prisma.transaction.create({
+      // TODO: Implement getting author by ID
+      //
+      // Use await prisma.author.findUnique()
+      // Include papers in the response
+      // Return null if not found
+      const authorId = await prisma.author.findUnique({
+        where: {
+          id: id,
+        },
+        include: { papers: true },
+      });
+      if (!authorId) {
+        return null;
+      } else {
+        return authorId;
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateAuthor: async (id, authorData) => {
+    try {
+      // TODO: Implement author update
+      //
+      // Use await prisma.author.update()
+      // Return updated author with papers
+      const authorExisting = await prisma.author.findUnique({
+        where: {
+          id: id,
+        },
+        include: { papers: true },
+      });
+      if (!authorExisting) {
+        return null;
+      }
+      const updateAuthor = await prisma.author.update({
+        where: {
+          id: id,
+        },
         data: {
-          activity: tsnData.activity,
-          deviceId: tsnData.deviceId,
-          executor: tsnData.executorId,
-          comment: tsnData.comment || undefined,
+          name: authorData.name,
+          email: authorData.email,
+          affiliation: authorData.affiliation,
         },
-        include: {
-          executor: true,
-          device: true,
-        },
+        include: { papers: true },
       });
-
-      return transaction;
+      return updateAuthor
     } catch (error) {
       throw error;
     }
   },
 
-  // Get transaction by Id
-  getTransactionById: async (id) => {
+  deleteAuthor: async (id) => {
     try {
-      return await prisma.transaction.findUnique({
-        where: { id },
-        include: {
-          executor: true,
-          device: true,
+      // TODO: Implement author deletion
+      //
+      // First check if author is sole author of any papers
+      // If yes, throw error
+      // If no, delete author
+      // Use await prisma.author.delete()
+      return await prisma.author.delete({
+        where: {
+          id: id,
         },
       });
     } catch (error) {
       throw error;
     }
   },
-
-  // Get all transactions with filters
-  // Include executor and device in the response
-  // filters can include:
-  // - activity: Activity
-  // - deviceId: int 
-  // - executorId: int
-  getAllTransactions: async (filters = {}) => {
+  getPapersByAuthorId: async (id) => {
     try {
-      const { activity, deviceId, executorId } = filters;
-
-      const whereClause = {
-        activity: activity || undefined,
-        executorId: executorId || undefined,
-        deviceId: deviceId || undefined,
-      };
-
-      return await prisma.transaction.findMany({
-        where: whereClause,
-        include: {
-          executor: true,
-          device: true,
+      const paper = await prisma.paper.findMany({
+        where: {
+          authors: {
+            some: {
+              id: id,
+            },
+          },
         },
+        include: { authors: true },
       });
-
+      return paper;
     } catch (error) {
       throw error;
     }
-  },
-
-  // Handle return 
-  handleReturn: async (deviceId, userId, comment) => {
-    try {
-      await prisma.inventory.update({ where: { id: deviceId }, data: { status: "Available" } });
-      return await prisma.transaction.create({
-        data: {
-          deviceId,
-          executorId: userId,
-          activity: "Return",
-          comment,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Retire device
-  retireDevice: async (deviceId, adminId, comment) => {
-    try {
-      await prisma.inventory.update({ where: { id: deviceId }, data: { status: "Retired" } });
-      return await prisma.transaction.create({
-        data: {
-          deviceId,
-          executorId: adminId,
-          activity: "Retired",
-          comment,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
+  }
 };
 
 module.exports = {

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const devicetypeRoutes = require("./routes/deviceType");
-const inventoryRoutes = require("./routes/inventory");
+const paperRoutes = require("./routes/papers");
+const authorRoutes = require("./routes/authors");
 
 // This is the main router file that combines all route modules.
 // It helps organize routes into separate files for better maintainability.
@@ -19,7 +19,7 @@ const inventoryRoutes = require("./routes/inventory");
 // - GET /api/authors/1 → handled by routes/authors.js GET '/:id'
 
 // Mount routes
-//router.use("/devicetype", devicetypeRoutes);
-router.use("/inventory", inventoryRoutes);
+router.use("/papers", paperRoutes);
+router.use("/authors", authorRoutes);
 
 module.exports = router;
