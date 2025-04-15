@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../database");
-const middleware = require("../middleware");
+const middleware = require("../middlewares/middleware");
 
 // GET /api/authors
 router.get(
@@ -151,9 +151,9 @@ router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
     for (let paper of papers) {
       const authorCount = paper.authors.length;
       if (authorCount === 1) {
-        return res.status(400).json({ 
-          error: "Constraint Error", 
-          message: "Cannot delete author: they are the only author of one or more papers" 
+        return res.status(400).json({
+          error: "Constraint Error",
+          message: "Cannot delete author: they are the only author of one or more papers"
         });
       }
     }

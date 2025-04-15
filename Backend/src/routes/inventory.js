@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../database");
-const middleware = require("../middleware");
+const middleware = require("../middlewares/middleware");
 
 // Standard response format helper
 const formatResponse = (data, message = "") => ({
@@ -44,7 +44,7 @@ router.post("/", async (req, res, next) => {
         message: "Validation failed"
       });
     }
-    
+
     const newInventory = await db.createInventory(req.body);
     res.status(201).json(formatResponse(newInventory, "Inventory created"));
   } catch (error) {
@@ -66,7 +66,7 @@ router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
 
     const inventoryId = parseInt(req.params.id);
     const existingInventory = await db.getInventoryById(inventoryId);
-    
+
     if (!existingInventory) {
       return res.status(404).json(formatResponse(null, "Inventory not found"));
     }
@@ -83,7 +83,7 @@ router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
   try {
     const inventoryId = parseInt(req.params.id);
     const existingInventory = await db.getInventoryById(inventoryId);
-    
+
     if (!existingInventory) {
       return res.status(404).json(formatResponse(null, "Inventory not found"));
     }
