@@ -5,10 +5,11 @@ import './index.css'
 // import App from './route/App.jsx'
 import Login from './route/Login.jsx';
 import Layout from './route/Layout.jsx';
-import RequestManagement from './route/RequestManagement.jsx';
+//import RequestManagement from './route/RequestManagement.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Profile from './route/Profile.jsx';
 import MyDeviceRoutes from './route/MyDeviceRoutes.jsx';
+import RequestManagementRoutes from './route/RequestManagementRoutes.jsx';
 
 
 const router = createBrowserRouter([
@@ -26,7 +27,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/requestmanagment', 
-        element: <RequestManagement />
+        element: <RequestManagementRoutes />
       },
       {
         path: '/profile',
