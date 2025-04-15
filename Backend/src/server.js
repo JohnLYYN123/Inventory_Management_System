@@ -1,6 +1,6 @@
 const express = require("express");
 const routes = require("./routes");
-const middleware = require("./middleware");
+const middleware = require("./middlewares/middleware");
 
 const app = express();
 const PORT = 3000;
