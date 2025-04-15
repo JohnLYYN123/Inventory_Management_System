@@ -142,6 +142,51 @@ const validateRequestInput = (req) => {
   }
 }
 
+const validateUserInput = (req) => {
+  const { userName, email, department, location, displayName, password, role } = req.body;
+  const errors = [];
+
+  if (!userName) {
+    errors.push("Username is required.");
+  } else if (isAllWhitespace(userName)) {
+    errors.push("Username cannot be empty or whitespace.");
+  }
+
+  if (!password) {
+    errors.push("Password is required.");
+  } else if (isAllWhitespace(password)) {
+    errors.push("Password cannot be empty or whitespace.");
+  }
+
+  if (!email) {
+    errors.push("Email is required.");
+  } else if (isAllWhitespace(email)) {
+    errors.push("Email cannot be empty or whitespace.");
+  }
+
+  if (!department) {
+    errors.push("Department is required.");
+  }
+  
+  if (!location) {
+    errors.push("Location is required.");
+  }
+
+  if (!displayName) {
+    errors.push("Display name is required.");
+  }
+
+  if (!role) {
+    errors.push("Role is required.");
+  }
+
+  if (errors.length > 0) {
+    return errors;
+  } else {
+    return [];
+  }
+}
+
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Internal Server Error" });
@@ -155,5 +200,6 @@ module.exports = {
   validateDeviceTypeInput,
   validateRequestQueryParams,
   validateRequestInput,
+  validateUserInput,
   errorHandler
 };

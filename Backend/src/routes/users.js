@@ -3,162 +3,65 @@ const router = express.Router();
 const db = require("../database");
 const middleware = require("../middlewares/middleware");
 
-// GET /api/authors
-router.get(
-  "/",
-  middleware.validateAuthorQueryParams,
-  async (req, res, next) => {
-    try {
-      // TODO: Implement GET /api/authors
-      //
-      // 1. Extract query parameters:
-      //    - name (optional)
-      //    - affiliation (optional)
-      //    - limit (optional, default: 10)
-      //    - offset (optional, default: 0)
-      //
-      // 2. Call db.getAllAuthors with filters
-      //
-      // 3. Send JSON response with status 200:
-      //    res.json({
-      //      authors,  // Array of authors with their papers
-      //      total,    // Total number of authors matching filters
-      //      limit,    // Current page size
-      //      offset    // Current page offset
-      //    });
-      let authors = await db.getAllAuthors(req.query);
-      res.status(200).json({
-        authors: authors.authors,
-        total: authors.total,
-        limit: authors.limit,
-        offset: authors.offset,
-      })
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// GET /api/authors/:id
-router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
-  try {
-    // TODO: Implement GET /api/authors/:id
-    //
-    // 1. Get author ID from req.params
-    //
-    // 2. Call db.getAuthorById
-    //
-    // 3. If author not found, return 404
-    //
-    // 4. Send JSON response with status 200:
-    //    res.json(author);
-    const author = await db.getAuthorById(parseInt(req.params.id));
-    if (!author) {
-      return res.status(404).json({ error: "Author not found" });
-    } else {
-      return res.status(200).json(author);
-    }
-  } catch (error) {
-    next(error);
-  }
+// Standard response format helper
+const formatResponse = (data, message = "") => ({
+  success: true,
+  data,
+  message
 });
 
-// POST /api/authors
+// create a new user
 router.post("/", async (req, res, next) => {
   try {
-    // TODO: Implement POST /api/authors
-    //
-    // 1. Validate request body using middleware.validateAuthorInput
-    //
-    // 2. If validation fails, return 400 with error messages
-    //
-    // 3. Call db.createAuthor
-    //
-    // 4. Send JSON response with status 201:
-    //    res.status(201).json(author);
-    const errors = middleware.validateAuthorInput(req.body);
+    const errors = middleware.validateUserInput(req);
     if (errors.length > 0) {
-      return res.status(400).json({ error: "Validation Error", messages: errors });
+      return res.status(400).json({
+        success: false,
+        errors,
+        message: "Validation failed"
+      });
     }
-    const author = await db.createAuthor(req.body);
-    res.status(201).json({
-      ...author,
-      papers: []
-    });
+
+    const newUser = await db.createUser(req.body);
+    res.status(201).json(formatResponse(newUser, "User created"));
   } catch (error) {
     next(error);
   }
 });
 
-// PUT /api/authors/:id
-router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
+// get user by id
+router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
   try {
-    // TODO: Implement PUT /api/authors/:id
-    //
-    // 1. Get author ID from req.params
-    //
-    // 2. Validate request body using middleware.validateAuthorInput
-    //
-    // 3. If validation fails, return 400 with error messages
-    //
-    // 4. Call db.updateAuthor
-    //
-    // 5. If author not found, return 404
-    //
-    // 6. Send JSON response with status 200:
-    //    res.json(author);
-    const errors = middleware.validateAuthorInput(req.body);
-    if (errors.length > 0) {
-      return res.status(400).json({ error: "Validation Error", messages: errors });
+    const user = await db.getUserById(parseInt(req.params.id));
+    if (!user) {
+      return res.status(404).json(formatResponse(null, "User not found"));
     }
-    req.params.id = parseInt(req.params.id);
-    const author = await db.updateAuthor(req.params.id, req.body);
-    if (!author) {
-      return res.status(404).json({ error: "Author not found" });
-    } else {
-      return res.status(200).json(author);
-    }
+    return res.status(200).json(formatResponse(user));
   } catch (error) {
     next(error);
   }
 });
 
-// DELETE /api/authors/:id
-router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
+//reset user password
+router.post("/:id/reset-password", middleware.validateRequestInput, async (req, res, next) => {
   try {
-    // TODO: Implement DELETE /api/authors/:id
-    //
-    // 1. Get author ID from req.params
-    //
-    // 2. Call db.deleteAuthor
-    //
-    // 3. If author not found, return 404
-    //
-    // 4. If author is the sole author of any papers, return 400:
-    //    {
-    //      "error": "Constraint Error",
-    //      "message": "Cannot delete author: they are the only author of one or more papers"
-    //    }
-    //
-    // 5. Send no content response with status 204:
-    //    res.status(204).end();
-    req.params.id = parseInt(req.params.id);
-    const author = await db.getAuthorById(req.params.id);
-    if (!author) {
-      return res.status(404).json({ error: "Author not found" });
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json(formatResponse(null, "Password is required"));
     }
-    const papers = await db.getPapersByAuthorId(req.params.id);
-    for (let paper of papers) {
-      const authorCount = paper.authors.length;
-      if (authorCount === 1) {
-        return res.status(400).json({
-          error: "Constraint Error",
-          message: "Cannot delete author: they are the only author of one or more papers"
-        });
-      }
+    
+    const userForUpdate = await db.getUserById(parseInt(req.params.id));
+    if (!userForUpdate) {
+      return res.status(404).json(formatResponse(null, "User not found"));
     }
-    await db.deleteAuthor(req.params.id);
-    res.status(204).end();
+
+    const email = userForUpdate.email;
+
+    const userUpdated = await db.resetPassword(email, password);
+    if (!userUpdated) {
+      return res.status(404).json(formatResponse(null, "password update failed"));
+    }
+    return res.status(200).json(formatResponse(user, "Password reset successfully"));
   } catch (error) {
     next(error);
   }
