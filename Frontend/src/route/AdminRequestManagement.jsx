@@ -83,6 +83,8 @@ function AdminRequestManagement() {
     const [showManagementDialog, setShowManagementDialog] = useState(false);
     const [viewedRequest, setViewedRequest] = useState(null);
 
+    const [uploadFile, setUploadFile] = useState(null);
+
     const requestIdPrefix = 'REQ_'
 
     const itemPerPage = 3;
@@ -91,12 +93,12 @@ function AdminRequestManagement() {
 
     const modeData = mode === "all" ? requests : requests.filter(item=> item.status === mode);
 
-    const handleWithdraw = (id) => {
+    const handleWithdraw =  async (id) => {
         setRequests(prev => prev.filter(req => req.id !== id));
         setShowDialog(false);
     };
 
-    const handleSaveEdit = () => {
+    const handleSaveEdit = async () => {
     setRequests(prev =>
         prev.map(req =>
         req.id === curEditRequest.id ? curEditRequest : req
@@ -105,7 +107,7 @@ function AdminRequestManagement() {
     setShowDialog(false);
     };
 
-    const addNewRequest = () => {
+    const addNewRequest = async () => {
         const newId = Math.max(...requests.map(r => r.id)) + 1;
         
         const newRequest = {
@@ -120,13 +122,45 @@ function AdminRequestManagement() {
         setNewRequestInfo("");
     };
 
-    const handleApproveRequest = (request) => {
-        toast.success(`Request made by ${request.requestedBy} was approved`);
-        setRequestData(prev => prev.filter(req => req.id !== request.id));
-        setShowManagementDialog(false);
+    const handleApproveRequest =  async (request) => {
+        // passing to API submission
+        const formData = new FormData();
+        formData.append("requestId", request.id);
+        formData.append("device", request.device);
+        formData.append("requestedBy", request.requestedBy);
+        formData.append("date", request.date);
+        formData.append("reason", request.reason);
+        formData.append("supportFile", uploadFile);
+
+        console.log(formData);
+
+        try {
+            // Simulate API call
+            // const response = await fetch("https://api.example.com/approve-request", {
+            //     method: "POST",
+            //     body: formData,
+            // });
+            
+            const response = {
+                ok: true, // Simulate a successful response
+            }
+
+            if (!response.ok) {
+                throw new Error("APi submission failed");
+            }
+
+            toast.success(`Request made by ${request.requestedBy} was approved`);
+            setRequestData(prev => prev.filter(req => req.id !== request.id));
+            setUploadFile(null);
+            setShowManagementDialog(false);
+        } catch (error) {
+            console.error("Error when doing submission:", error);
+            toast.error("Error when doing submission. Please try again.");
+        }
+
       };
       
-      const handleDeclineRequest = (request) => {
+      const handleDeclineRequest = async (request) => {
         toast.error(`Request made by ${request.requestedBy} was declined`);
         setRequestData(prev => prev.filter(req => req.id !== request.id));
         setShowManagementDialog(false);
@@ -184,7 +218,9 @@ function AdminRequestManagement() {
                                     <CheckCircle 
                                         size={18}
                                         className="text-green-500 cursor-pointer"
-                                        onClick={() => handleApproveRequest(req)}
+                                        onClick={() => {
+                                            setViewedRequest(req);
+                                            setShowManagementDialog(true);}}
                                     />
                                     <XCircle 
                                         size={18}
@@ -226,10 +262,34 @@ function AdminRequestManagement() {
                                 <Label className="text-md font-medium">Reason:</Label>
                                 <div className="text-md">{viewedRequest.reason || "N/A"}</div>
                                 </div>
+                                <div>
+                                    <Label className="text-md font-medium">Admin Upload Support Files:</Label>
+                                    <Input 
+                                        type="file"
+                                        accept="image/*,.pdf,.doc,.docx"
+                                        onChange={(e) => setUploadFile(e.target.files[0])}
+                                    />
+                                    {uploadFile && (
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Selected: <strong>{uploadFile.name}</strong>
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                             <DialogFooter className="flex justify-end gap-2 mt-4">
                                 <Button variant="default" onClick={() => setShowManagementDialog(false)}>Close</Button>
-                                <Button variant="buttonBlue" onClick={() => handleApproveRequest(viewedRequest)}>Approve Request</Button>
+                                <Button variant="buttonBlue" onClick={() => 
+                                    {
+                                        if(!uploadFile){
+                                            toast.error("Please upload support files before approving the request.");
+                                            return;
+                                        }
+                                        handleApproveRequest(viewedRequest);
+                                    }
+                                }
+                                >
+                                    Approve Request
+                                </Button>
                                 <Button variant="destructive" onClick={() => handleDeclineRequest(viewedRequest)}>Decline Request</Button> 
                             </DialogFooter>
                             </DialogContent>

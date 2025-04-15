@@ -38,12 +38,12 @@ function Profile() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     
 
-    const handleSaveProfile = () => {
+    const handleSaveProfile = async () => {
         setProfile(editProfile);
         setIsEditingProfile(false);
     }
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (editPassword === confirmPassword) {
             setProfile({ ...profile, password: editPassword });
             setIsChangingPassword(false);

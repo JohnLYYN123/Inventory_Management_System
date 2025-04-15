@@ -45,7 +45,7 @@ function Login(){
 
     const navigate = useNavigate();
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         const role = email.toLowerCase().includes("admin") ? "admin" : "user";
         const mockUser = {
             email, 
