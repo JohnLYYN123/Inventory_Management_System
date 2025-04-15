@@ -416,7 +416,7 @@ const dbOperations = {
   // - deviceId: Int 
   // request status -> Pending 
   // device status: new device->Pending; previous device->Available
-  // For requestData.device:
+  // For requestData.deviceId:
   //    - First try to find an existing item with matching id,
   //    - If not found, throw an error
   //    - If the device is not available, throw an error
@@ -590,6 +590,32 @@ const dbOperations = {
     }
   },
 
+  // update the url of files in cloud storage
+  updateFileUrl: async (id, fileUrl) => {
+    try {
+      const existingTransaction = await prisma.transaction.findUnique({
+        where: { id: Number(id) },
+      });
+
+      if (!existingTransaction) {
+        throw new Error("Transaction not found");
+      }
+
+      return await prisma.transaction.update({
+        where: { id: Number(id) },
+        data: {
+          file: fileUrl,
+        },
+        include: {
+          executor: true,
+          device: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Handle return 
   handleReturn: async (deviceId, userId, comment) => {
     try {
@@ -600,6 +626,10 @@ const dbOperations = {
           executorId: userId,
           activity: "Return",
           comment,
+        },
+        include: {
+          executor: true,
+          device: true,
         },
       });
     } catch (error) {
@@ -617,6 +647,10 @@ const dbOperations = {
           executorId: adminId,
           activity: "Retired",
           comment,
+        },
+        include: {
+          executor: true,
+          device: true,
         },
       });
     } catch (error) {

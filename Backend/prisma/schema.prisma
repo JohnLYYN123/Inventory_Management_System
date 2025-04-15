@@ -36,64 +36,56 @@ model User {
   role         Role
   createTime   DateTime      @default(now())
   updateTime   DateTime      @updatedAt
-
   requests     Request[]     @relation("UserRequests")
   transactions Transaction[] @relation("UserTransactions")
 }
 
 model DeviceType {
-  id           Int         @id @default(autoincrement())
-  deviceType   String      @unique
-  createTime   DateTime    @default(now())
-  updateTime   DateTime    @updatedAt
-
-  inventories  Inventory[] @relation("DeviceTypeInventory")
+  id          Int         @id @default(autoincrement())
+  deviceType  String      @unique
+  createTime  DateTime    @default(now())
+  updateTime  DateTime    @updatedAt
+  inventories Inventory[] @relation("DeviceTypeInventory")
 }
 
 model Inventory {
-  id           Int         @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   deviceName   String
   status       Status
-  createTime   DateTime    @default(now())
-  updateTime   DateTime    @updatedAt
-
+  createTime   DateTime      @default(now())
+  updateTime   DateTime      @updatedAt
   deviceTypeId Int
-  deviceType   DeviceType  @relation("DeviceTypeInventory", fields: [deviceTypeId], references: [id])
-
-  requests     Request[]   @relation("InventoryRequests")
+  deviceType   DeviceType    @relation("DeviceTypeInventory", fields: [deviceTypeId], references: [id])
+  requests     Request[]     @relation("InventoryRequests")
   transactions Transaction[] @relation("InventoryTransactions")
 }
 
 model Request {
-  id           Int        @id @default(autoincrement())
-  requestTime  DateTime   @default(now())
-  status       RequestStatus
-  adminComment String?
+  id            Int           @id @default(autoincrement())
+  requestTime   DateTime      @default(now())
+  status        RequestStatus
+  adminComment  String?
   requestDetail String?
-  createTime   DateTime   @default(now())
-  updateTime   DateTime   @updatedAt
-
-  requestorId  Int
-  requestor    User       @relation("UserRequests", fields: [requestorId], references: [id])
-
-  deviceId     Int
-  device       Inventory  @relation("InventoryRequests", fields: [deviceId], references: [id])
+  createTime    DateTime      @default(now())
+  updateTime    DateTime      @updatedAt
+  requestorId   Int
+  deviceId      Int
+  device        Inventory     @relation("InventoryRequests", fields: [deviceId], references: [id])
+  requestor     User          @relation("UserRequests", fields: [requestorId], references: [id])
 }
 
 model Transaction {
-  id           Int        @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   activity     Activity
-  activityTime DateTime   @default(now())
+  activityTime DateTime  @default(now())
   file         String?
   comment      String?
-  createTime   DateTime   @default(now())
-  updateTime   DateTime   @updatedAt
-
+  createTime   DateTime  @default(now())
+  updateTime   DateTime  @updatedAt
   deviceId     Int
-  device       Inventory  @relation("InventoryTransactions", fields: [deviceId], references: [id])
-
   executorId   Int
-  executor     User       @relation("UserTransactions", fields: [executorId], references: [id])
+  device       Inventory @relation("InventoryTransactions", fields: [deviceId], references: [id])
+  executor     User      @relation("UserTransactions", fields: [executorId], references: [id])
 }
 
 enum Role {
@@ -120,4 +112,3 @@ enum Activity {
   Return
   Retired
 }
-
