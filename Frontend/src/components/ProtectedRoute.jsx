@@ -1,11 +1,23 @@
-import { Navigate } from "react-router-dom";
+// import { Navigate } from "react-router-dom";
 
-function ProtectedRoute({children}){
-    const user = JSON.parse(localStorage.getItem("user"));
-    if(!user || !user.token){
-        return <Navigate to="/login" />;
-    }
+// function ProtectedRoute({children}){
+//     const user = JSON.parse(localStorage.getItem("user"));
+//     if(!user || !user.token){
+//         return <Navigate to="/login" />;
+//     }
+//     return children;
+// }
+
+// export default ProtectedRoute; 
+// for testing purpose use following
+// ProtectedRoute.jsx
+function ProtectedRoute({ children }) {
+    // Temporarily bypass the auth check during development:
     return children;
-}
-
-export default ProtectedRoute;
+  
+    // In production, you would normally do:
+    // const user = JSON.parse(localStorage.getItem("user"));
+    // return user ? children : <Navigate to="/login" />;
+  }
+  
+  export default ProtectedRoute;
