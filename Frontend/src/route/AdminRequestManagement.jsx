@@ -25,6 +25,14 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationPrevious,
+    PaginationNext,
+} from "@/components/ui/pagination";
+
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -87,13 +95,19 @@ function AdminRequestManagement() {
     const [uploadFile, setUploadFile] = useState(null);
     const [adminComment, setAdminComment] = useState("");
 
+    // for pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
     const requestIdPrefix = 'REQ_'
 
-    const itemPerPage = 3;
-    const pageCount = Math.ceil(requests.length / itemPerPage);
-    const curRequest = requests.slice((page - 1) * itemPerPage, page * itemPerPage);
-
     const modeData = mode === "all" ? requests : requests.filter(item=> item.status === mode);
+
+    // pagination calculations
+    const total = Math.ceil(modeData.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedRequest = modeData.slice(startIndex, endIndex);
 
     useEffect(() => {
         setRequestData(mockRequestData);
@@ -217,7 +231,7 @@ function AdminRequestManagement() {
                         </tr>
                         </thead>
                         <tbody>
-                        {requestData && requestData.map((req) => (
+                        {paginatedRequest && paginatedRequest.map((req) => (
                             <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
                                 <td className="p-3">{req.id}</td>
                                 <td className="p-3">{req.device}</td>
@@ -240,7 +254,32 @@ function AdminRequestManagement() {
                             </tr>
                         ))}
                         </tbody>
-                    </table> 
+                    </table>
+                    {total > 1 && (
+                        <Pagination className="mt-5 justify-center items-center">
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                        className={currentPage !== 1 ? "" : "opacity-40" }
+                                    />
+                                </PaginationItem>
+
+                                <PaginationItem>
+                                        <span className="text-sm text-muted-foreground px-3">
+                                        Page {currentPage} of {total}
+                                    </span>
+                                </PaginationItem>
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        onClick={() => setCurrentPage((p) => Math.max(p + 1, 1))}
+                                        className={currentPage !== total ? "" : "opacity-40" }
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    )} 
 
                     {/* more action dialog */}
                     {viewedRequest && (

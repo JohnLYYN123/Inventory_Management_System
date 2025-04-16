@@ -21,6 +21,14 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationPrevious,
+    PaginationNext,
+} from "@/components/ui/pagination";
+
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -78,12 +86,22 @@ function AdminDevice() {
 
     const [editDeviceDialog, setEditDeviceDialog] = useState(false);
     const [editDeviceInfo, setEditDeviceInfo] = useState(null);
+
+    // for pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 2;
     
     const modeData = mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item=> item.status === mode.toLowerCase());
 
     const filteredInventory = modeData.filter((device) =>
         device.name.toLowerCase().includes(searchedDevice.toLowerCase())
     );
+
+    // pagination calculations
+    const total = Math.ceil(filteredInventory.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedInventory = filteredInventory.slice(startIndex, endIndex);
       
 
     const handleAddingNewDevice = async () => {
@@ -115,6 +133,7 @@ function AdminDevice() {
         );
         setEditDeviceDialog(false);
     }
+    
 
 
    
@@ -158,93 +177,98 @@ function AdminDevice() {
                 <div>
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-4xl font-bold mt-4">Inventory Device List</h1>
-                        <div className="w-1/6">
-                            <Dialog open={showNewDeviceDialog} onOpenChange={setShowNewDeviceDialog}>
-                                
-                                <Button variant="buttonBlue" className="w-full" onClick={() => setShowNewDeviceDialog(true)}> 
-                                    + New Device
-                                </Button>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Adding a New Device</DialogTitle>
-                                        <DialogDescription>Please fill in the information of the new device</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-3">
-                                        <Label htmlFor="deviceName">Device Name</Label>
-                                        <Input 
-                                            id="deviceName"
-                                            value={newDeviceInfo.name}
-                                            onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, name: e.target.value })}
-                                            placeholder="Please enter device name"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-3 mt-4">
-                                        <Label htmlFor="deviceType">Device Type</Label>
-                                        <Input 
-                                            id="deviceType"
-                                            value={newDeviceInfo.type}
-                                            onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, type: e.target.value })}
-                                            placeholder="Please enter device type"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-3 mt-4">
-                                        <Label htmlFor="deviceStatus">Device Status</Label>
-                                        <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, status: value })}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select a device status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="available">Available</SelectItem>
-                                                <SelectItem value="in-use">In Use</SelectItem>
-                                                <SelectItem value="retired">Retired</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-3 mt-4">
-                                        <Label htmlFor="assignedTo">Assigned To</Label>
-                                        <Input 
-                                            id="assignedTo"
-                                            value={newDeviceInfo.assignedTo}
-                                            onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, assignedTo: e.target.value })}
-                                            placeholder="Please enter the email of the person assigned to this device"
-                                        />
-                                    </div>
-
-                                    <DialogFooter className="flex justify-end gap-2 mt-4">
-                                        <Button variant="ghost" onClick={() => setShowNewDeviceDialog(false)}>Cancel</Button>
-                                        <Button variant="buttonBlue" onClick={() => {handleAddingNewDevice();}}>
-                                            Add
-                                        </Button>
-                                    </DialogFooter>   
-                                </DialogContent>
-                            </Dialog>  
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="justify-front mb-4 gap-2">
+                            <div>
+                                <Input
+                                placeholder="Search devices..."
+                                className="w-80"
+                                type="text"
+                                value={searchedDevice}
+                                onChange={(e) => setSearchedDevice(e.target.value)}
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex gap-2 mb-4">
-                        {["all", "Available", "In-Use", "Retired"].map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setMode(f)}
-                            className={`px-4 py-1 rounded-md border ${
-                            mode === f ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
-                            }`}
-                        >
-                            {f.charAt(0).toUpperCase() + f.slice(1)}
-                        </button>
-                        ))}
-                    </div>
-                    <div className="justify-front mb-4 gap-2">
-                        <div>
-                            <Input
-                            placeholder="Search devices..."
-                            className="w-80"
-                            type="text"
-                            value={searchedDevice}
-                            onChange={(e) => setSearchedDevice(e.target.value)}
-                            />
+                        <div className="flex gap-2 mb-4">
+                            {["all", "Available", "In-Use", "Retired"].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setMode(f)}
+                                className={`px-4 py-1 rounded-md border ${
+                                mode === f ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+                                }`}
+                            >
+                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                            </button>
+                            ))}
+                        </div>
+                        <div className="w-1/6 h-10 justify-end mb-4">
+                                <Dialog open={showNewDeviceDialog} onOpenChange={setShowNewDeviceDialog}>
+                                    <Button variant="buttonBlue" className="w-full" onClick={() => setShowNewDeviceDialog(true)}> 
+                                        + New Device
+                                    </Button>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Adding a New Device</DialogTitle>
+                                            <DialogDescription>Please fill in the information of the new device</DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-3">
+                                            <Label htmlFor="deviceName">Device Name</Label>
+                                            <Input 
+                                                id="deviceName"
+                                                value={newDeviceInfo.name}
+                                                onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, name: e.target.value })}
+                                                placeholder="Please enter device name"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-3 mt-4">
+                                            <Label htmlFor="deviceType">Device Type</Label>
+                                            <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, type: value })}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select a device type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="laptop">Laptop</SelectItem>
+                                                    <SelectItem value="mobile">Mobile</SelectItem>
+                                                    <SelectItem value="tablet">Tablet</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="space-y-3 mt-4">
+                                            <Label htmlFor="deviceStatus">Device Status</Label>
+                                            <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, status: value })}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select a device status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="available">Available</SelectItem>
+                                                    <SelectItem value="in-use">In Use</SelectItem>
+                                                    <SelectItem value="retired">Retired</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="space-y-3 mt-4">
+                                            <Label htmlFor="assignedTo">Assigned To</Label>
+                                            <Input 
+                                                id="assignedTo"
+                                                value={newDeviceInfo.assignedTo}
+                                                onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, assignedTo: e.target.value })}
+                                                placeholder="Please enter the email of the person assigned to this device"
+                                            />
+                                        </div>
+
+                                        <DialogFooter className="flex justify-end gap-2 mt-4">
+                                            <Button variant="ghost" onClick={() => setShowNewDeviceDialog(false)}>Cancel</Button>
+                                            <Button variant="buttonBlue" onClick={() => {handleAddingNewDevice();}}>
+                                                Add
+                                            </Button>
+                                        </DialogFooter>   
+                                    </DialogContent>
+                                </Dialog>  
                         </div>
                     </div>
                     <table className="min-w-full table-auto boarder-collapse">
@@ -261,7 +285,7 @@ function AdminDevice() {
                         </thead>
                         {/* table stuffing */}
                         <tbody>
-                            {filteredInventory.map((req) => (
+                            {paginatedInventory.map((req) => (
                                 <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
                                     <td className="p-3">{req.id}</td>
                                     <td className="p-3">{req.name}</td>
@@ -290,6 +314,31 @@ function AdminDevice() {
                             ))}
                         </tbody>
                     </table>
+                    {total > 1 && (
+                        <Pagination className="mt-5 justify-center items-center">
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                        className={currentPage !== 1 ? "" : "opacity-40" }
+                                    />
+                                </PaginationItem>
+
+                                <PaginationItem>
+                                     <span className="text-sm text-muted-foreground px-3">
+                                        Page {currentPage} of {total}
+                                    </span>
+                                </PaginationItem>
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        onClick={() => setCurrentPage((p) => Math.max(p + 1, 1))}
+                                        className={currentPage !== total ? "" : "opacity-40" }
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    )}
                     {editDeviceDialog && (
                         <Dialog open={editDeviceDialog} onOpenChange={setEditDeviceDialog}>
                         <DialogContent>
@@ -298,22 +347,18 @@ function AdminDevice() {
                             <DialogDescription>Please be cautious the upcoming operations</DialogDescription>
                             </DialogHeader>
                             <div className="space-y-3">
-                                <Label htmlFor="deviceName">Device Name</Label>
-                                <Input
-                                    value={editDeviceInfo.name}
-                                    onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, name: e.target.value })}
-                                    placeholder="Please enter the new device name"
-                                />
+                                <Label htmlFor="deviceName">Device Name: </Label>
+                                <div className="text-md font-sm">{editDeviceInfo.name}</div>
 
-                                <Label htmlFor="deviceType">Device Type</Label>
-                                <Input
-                                    value={editDeviceInfo.type}
-                                    onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, type: e.target.value })}
-                                    placeholder="Please enter the new device type"
-                                />
+                                <Label htmlFor="deviceType">Device Type: </Label>
+                                <div className="text-md font-sm">{editDeviceInfo.type}</div>
 
-                                <Label htmlFor="deviceStatus">Device Status</Label>
-                                <Select value={editDeviceInfo.status} onValueChange={(value) => setEditDeviceInfo({ ...editDeviceInfo, status: value })}>
+                                <Label htmlFor="deviceStatus">Device Status: </Label>
+                                <Select value={editDeviceInfo.status} onValueChange={(value) => 
+                                        setEditDeviceInfo(prev => ({...prev,
+                                        status: value,
+                                        assignedTo: value === "in-use" ? prev.assignedTo : ""
+                                    }))}>
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select a device status" />
                                     </SelectTrigger>
@@ -324,11 +369,16 @@ function AdminDevice() {
                                     </SelectContent>
                                 </Select>
 
-                                <Label htmlFor="assignedTo">Assigned To</Label>
+                                <Label htmlFor="assignedTo">Assigned To: </Label>
                                 <Input
                                     value={editDeviceInfo.assignedTo}
                                     onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, assignedTo: e.target.value })}
-                                    placeholder="Please enter the email of the person assigned to this device"
+                                    placeholder={
+                                        editDeviceInfo.status === "in-use" ?
+                                        "Please enter the email of the person assigned to this device" :
+                                        "Assigned to feature is DISABLED for the current device status"
+                                    }
+                                    disabled={editDeviceInfo.status !== "in-use"}
                                 />
                             </div>
                             <DialogFooter className="flex justify-end gap-2 mt-4">
