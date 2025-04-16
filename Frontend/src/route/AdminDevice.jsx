@@ -133,10 +133,7 @@ function AdminDevice() {
         );
         setEditDeviceDialog(false);
     }
-    
 
-
-   
 
     return (
         <div className="px-10 py-3">

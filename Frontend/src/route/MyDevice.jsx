@@ -3,6 +3,15 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import Donut from "../components/PieChart";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
+
+
 // Helper function to generate page numbers with ellipses.
 function getPageNumbers(currentPage, totalPages, maxVisible = 5) {
   if (totalPages <= maxVisible) {
@@ -155,7 +164,31 @@ function MyDevice() {
           );
         })}
       </div>
+      {/* {totalPages > 1 && (
+        <Pagination className="mt-5 justify-center items-center">
+            <PaginationContent>
+                <PaginationItem>
+                    <PaginationPrevious
+                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        className={currentPage !== 1 ? "" : "opacity-40" }
+                    />
+                </PaginationItem>
 
+                <PaginationItem>
+                      <span className="text-sm text-muted-foreground px-3">
+                        Page {currentPage} of {total}
+                    </span>
+                </PaginationItem>
+
+                <PaginationItem>
+                    <PaginationNext
+                        onClick={() => setCurrentPage((p) => Math.max(p + 1, 1))}
+                        className={currentPage !== total ? "" : "opacity-40" }
+                    />
+                </PaginationItem>
+            </PaginationContent>
+        </Pagination>
+    )} */}
       <h2 className="text-2xl font-bold mb-4">Device Distribution</h2>
       <Donut data={computedDistribution} />
     </div>

@@ -53,12 +53,19 @@ function RequestManagement() {
   // State to control the visibility of the device dropdown
   const [showDropdown, setShowDropdown] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const requestIdPrefix = "REQ_";
-  const itemPerPage = 3;
-  const pageCount = Math.ceil(requests.length / itemPerPage);
 
   // Filter requests based on selected mode.
   const modeData = mode === "all" ? requests : requests.filter(item => item.status === mode);
+
+  // pagination calculations
+  const total = Math.ceil(modeData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRequest = modeData.slice(startIndex, endIndex);
 
   const handleWithdraw = async (id) => {
     setRequests(prev => prev.filter(req => req.id !== id));
@@ -239,7 +246,7 @@ function RequestManagement() {
           </tr>
         </thead>
         <tbody>
-          {modeData.map((req) => (
+          {paginatedRequest.map((req) => (
             <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
               <td className="p-3">{requestIdPrefix + req.id}</td>
               <td className="p-3">
@@ -265,6 +272,31 @@ function RequestManagement() {
           ))}
         </tbody>
       </table>
+      {total > 1 && (
+        <Pagination className="mt-5 justify-center items-center">
+            <PaginationContent>
+                <PaginationItem>
+                    <PaginationPrevious
+                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        className={currentPage !== 1 ? "" : "opacity-40" }
+                    />
+                </PaginationItem>
+
+                <PaginationItem>
+                        <span className="text-sm text-muted-foreground px-3">
+                        Page {currentPage} of {total}
+                    </span>
+                </PaginationItem>
+
+                <PaginationItem>
+                    <PaginationNext
+                        onClick={() => setCurrentPage((p) => Math.max(p + 1, 1))}
+                        className={currentPage !== total ? "" : "opacity-40" }
+                    />
+                </PaginationItem>
+            </PaginationContent>
+        </Pagination>
+      )} 
       {curEditRequest && (
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent>
