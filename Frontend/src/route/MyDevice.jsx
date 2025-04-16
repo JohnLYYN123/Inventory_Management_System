@@ -72,26 +72,26 @@ function MyDevice() {
   const itemsPerPage = 6;
 
   // Fetch devices from backend API.
-  useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await fetch("http://localhost:4000/api/devices");
-        if (!response.ok) {
-          throw new Error("Failed to fetch devices");
-        }
-        const data = await response.json();
-        setDeviceList(data);
-      } catch (error) {
-        console.error("Error fetching devices:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchDevices = async () => {
+  //     try {
+  //       const response = await fetch("http://localhost:4000/api/devices");
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch devices");
+  //       }
+  //       const data = await response.json();
+  //       setDeviceList(data);
+  //     } catch (error) {
+  //       console.error("Error fetching devices:", error);
+  //     }
+  //   };
 
-    fetchDevices();
-  }, []);
+  //   fetchDevices();
+  // }, []);
 
   // Reset page to 1 when the search query changes.
   useEffect(() => {
-    //setDeviceList(mockDevice);
+    setDeviceList(mockDevice);
     setCurrentPage(1);
   }, [searchedDevice]);
 

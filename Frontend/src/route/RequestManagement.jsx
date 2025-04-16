@@ -26,13 +26,13 @@ import { Label } from "@/components/ui/Label";
 const statusIcon = {
   pending: "bg-yellow-100 text-yellow-700",
   completed: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
+  denied: "bg-red-100 text-red-700",
 };
 
 const mockData = [
   { id: 1, status: "pending", date: "2025-03-14", device: "MacBook Pro M3", info: "goog" },
   { id: 2, status: "completed", date: "2025-03-13", device: "iPhone 15 Pro", info: "goog" },
-  { id: 3, status: "rejected", date: "2025-03-12", device: "Dell XPS 15", info: "goog" },
+  { id: 3, status: "denied", date: "2025-03-12", device: "Dell XPS 15", info: "goog" },
   { id: 4, status: "completed", date: "2025-04-12", device: "De1 SOC", info: "goog" },
   { id: 5, status: "completed", date: "2025-04-12", device: "OMG", info: "goog" },
   { id: 6, status: "completed", date: "2025-04-12", device: "Testing Kit", info: "goog" },
@@ -94,6 +94,10 @@ function RequestManagement() {
     setNewDevice("");
     setNewRequestInfo("");
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [mode, requests]);
 
   // === Device Search Dropdown for New Request ===
 
@@ -223,7 +227,7 @@ function RequestManagement() {
         </div>
       </div>
       <div className="flex gap-2 mb-4">
-        {["all", "pending", "completed", "rejected"].map((f) => (
+        {["all", "pending", "completed", "denied"].map((f) => (
           <button
             key={f}
             onClick={() => setMode(f)}

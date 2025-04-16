@@ -14,6 +14,7 @@ function jwtTokenAuthentication(req, res, next) {
         return res.status(401).json(formatResponse(false, "No token provided"));
     }
 
+    // decoding the token
     jwt.verify(token, process.env.JWT_SECRET, (error, user) => {
         if (error) {
             return res.status(403).json(formatResponse(false, "Invalid token"));

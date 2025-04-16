@@ -110,6 +110,7 @@ function AdminRequestManagement() {
     const paginatedRequest = modeData.slice(startIndex, endIndex);
 
     useEffect(() => {
+        setCurrentPage(1); 
         setRequestData(mockRequestData);
       }, []);
 
