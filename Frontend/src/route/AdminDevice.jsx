@@ -39,6 +39,7 @@ const mockDeviceInventory = [
     { id: "1", name: "MacBook Pro M3", type: "Laptop", status: "in-use", assignedTo: "james.wilson@company.com" },
     { id: "2", name: "iPhone 15 Pro", type: "Mobile", status: "available", assignedTo: "" },
     { id: "3", name: "Dell XPS 15", type: "Laptop", status: "retired", assignedTo: "" },
+    { id: "4", name: "MacBook Pro M3", type: "Laptop", status: "pending", assignedTo: "james.wilson@company.com" },
 ];
 
 const mockDevice = [
@@ -134,6 +135,10 @@ function AdminDevice() {
         setEditDeviceDialog(false);
     }
 
+    useEffect(() => {
+        setCurrentPage(1);
+      }, [mode, inventoryDeviceList]);
+
 
     return (
         <div className="px-10 py-3">
@@ -188,7 +193,7 @@ function AdminDevice() {
                             </div>
                         </div>
                         <div className="flex gap-2 mb-4">
-                            {["all", "Available", "In-Use", "Retired"].map((f) => (
+                            {["all", "Available", "In-Use", "Pending" ,"Retired"].map((f) => (
                             <button
                                 key={f}
                                 onClick={() => setMode(f)}
@@ -243,6 +248,7 @@ function AdminDevice() {
                                                 <SelectContent>
                                                     <SelectItem value="available">Available</SelectItem>
                                                     <SelectItem value="in-use">In Use</SelectItem>
+                                                    <SelectItem value="pending">Pending</SelectItem>
                                                     <SelectItem value="retired">Retired</SelectItem>
                                                 </SelectContent>
                                             </Select>
@@ -289,7 +295,7 @@ function AdminDevice() {
                                     <td className="p-3">{req.type}</td>
                                     <td className="p-3">
                                         <span
-                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${req.status === "available" ? "bg-green-100 text-green-800" : req.status === "in-use" ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"}`}
+                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${req.status === "available" ? "bg-green-100 text-green-800" : req.status === "in-use" ? "bg-yellow-100 text-yellow-800" : req.status === "pending" ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800"}`}
                                         >
                                             {req.status}
                                         </span>
@@ -362,6 +368,7 @@ function AdminDevice() {
                                     <SelectContent>
                                         <SelectItem value="available">Available</SelectItem>
                                         <SelectItem value="in-use">In Use</SelectItem>
+                                        <SelectItem value="pending">Pending</SelectItem>
                                         <SelectItem value="retired">Retired</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -371,11 +378,11 @@ function AdminDevice() {
                                     value={editDeviceInfo.assignedTo}
                                     onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, assignedTo: e.target.value })}
                                     placeholder={
-                                        editDeviceInfo.status === "in-use" ?
+                                        (editDeviceInfo.status === "in-use" || editDeviceInfo.status=="pending") ?
                                         "Please enter the email of the person assigned to this device" :
                                         "Assigned to feature is DISABLED for the current device status"
                                     }
-                                    disabled={editDeviceInfo.status !== "in-use"}
+                                    disabled={(editDeviceInfo.status !== "in-use" || editDeviceInfo.status !== "pending")}
                                 />
                             </div>
                             <DialogFooter className="flex justify-end gap-2 mt-4">

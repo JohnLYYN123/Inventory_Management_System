@@ -126,12 +126,12 @@ function Login(){
                                                 remember me
                                             </label>
                                     </div>
-                                    <a
+                                    {/* <a
                                     href="#"
                                     className="text-sm text-blue-500 hover:underline"
                                     >
                                     Forgot password?
-                                    </a>
+                                    </a> */}
                                 </div>
 
                                 <div className="w-full mt-4">
