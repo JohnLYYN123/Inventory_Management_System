@@ -65,6 +65,17 @@ const dbOperations = {
     }
   },
 
+  //TODO: Get users with email
+  getUserByEmail: async (email) => {
+    try {
+      return await prisma.user.findUnique({
+        where: { email },
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
   //----------- DeviceType Functions ----------------------
 
   // Get all device types with filters

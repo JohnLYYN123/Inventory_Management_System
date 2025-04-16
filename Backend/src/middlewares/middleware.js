@@ -178,6 +178,8 @@ const validateUserInput = (req) => {
 
   if (!role) {
     errors.push("Role is required.");
+  } else if (role != "Admin" && role != "Internal" && role != "External") {
+    errors.push("Role must be either 'Admin', 'Internal', or 'External'.");
   }
 
   if (errors.length > 0) {
