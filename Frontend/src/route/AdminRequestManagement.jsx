@@ -126,11 +126,8 @@ function AdminRequestManagement() {
         // passing to API submission
         const formData = new FormData();
         formData.append("requestId", request.id);
-        formData.append("device", request.device);
-        formData.append("requestedBy", request.requestedBy);
-        formData.append("date", request.date);
-        formData.append("reason", request.reason);
         formData.append("supportFile", uploadFile);
+        formData.append("adminComment", dfkjlhflajkhflja);
 
         console.log(formData);
 
@@ -161,6 +158,11 @@ function AdminRequestManagement() {
       };
       
       const handleDeclineRequest = async (request) => {
+        const formData = new FormData();
+        formData.append("requestId", request.id);
+        formData.append("supportFile", uploadFile);
+        formData.append("adminComment", dfkjlhflajkhflja);
+        
         toast.error(`Request made by ${request.requestedBy} was declined`);
         setRequestData(prev => prev.filter(req => req.id !== request.id));
         setShowManagementDialog(false);

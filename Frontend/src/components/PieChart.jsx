@@ -13,23 +13,22 @@ const Donut = ({ data }) => {
         },
         legend: {
           top: 'top',
-          left: 'center',
         },
         series: [
           {
             name: 'Device Type',
             type: 'pie',
-            radius: ['30%', '80%'],
-            avoidLabelOverlap: false,
-            label: {
-              show: true,
-              position: 'outside',
-            },
+            radius: ['50%', '80%'],
+            avoidLabelOverlap: true,
             emphasis: {
               label: {
                 show: true,
-                fontSize: 16,
+                fontSize: 18,
               },
+            },
+            label: {
+              show: true,
+              position: 'outside',
             },
             data: data,
           },
