@@ -21,7 +21,11 @@ router.post("/", async (req, res, next) => {
         message: "Validation failed"
       });
     }
-
+    // check if email already exists
+    const existingUser = await db.getUserByEmail(req.body.email);
+    if (existingUser) {
+      return res.status(400).json(formatResponse(null, "Email already exists"));
+    }
     const newUser = await db.createUser(req.body);
     res.status(201).json(formatResponse(newUser, "User created"));
   } catch (error) {
@@ -66,5 +70,29 @@ router.post("/:id/reset-password", middleware.validateRequestInput, async (req, 
     next(error);
   }
 });
+
+// login user
+router.post("/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json(formatResponse(null, "Email and password are required"));
+    }
+    
+    const user = await db.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json(formatResponse(null, "User not found"));
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json(formatResponse(null, "Invalid password"));
+    }
+
+    return res.status(200).json(formatResponse(user, "Login successful"));
+  } catch (error) {
+    next(error);
+  }
+}
+);
 
 module.exports = router;
