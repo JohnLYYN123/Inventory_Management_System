@@ -29,13 +29,17 @@ router.post("/", async (req, res, next) => {
     }
     const newUser = await db.createUser(req.body);
 
-    // creatio t 
+    // generate a token for the user
+    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRATION
+    });
 
+    const retData = {
+      identity: newUser, 
+      token: token
+    }
 
-
-
-
-    res.status(201).json(formatResponse(newUser, "User created"));
+    res.status(201).json(formatResponse(retData, "User created"));
   } catch (error) {
     next(error);
   }
