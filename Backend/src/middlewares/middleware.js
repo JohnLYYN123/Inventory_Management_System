@@ -58,12 +58,12 @@ const validateInventoryInput = (req) => {
 }
 
 const validateDeviceTypeInput = (req) => {
-  const { deviceType } = req.body;
+  const { deviceTypeName } = req.body;
   const errors = [];
-  if (!deviceType) {
-    errors.push("Device type is required.");
+  if (!deviceTypeName) {
+    errors.push("Device type name is required.");
   } else if (isAllWhitespace(deviceType)) {
-    errors.push("Device type cannot be empty or whitespace.");
+    errors.push("Device type name cannot be empty or whitespace.");
   }
 
   if (errors.length > 0) {
@@ -167,7 +167,7 @@ const validateUserInput = (req) => {
   if (!department) {
     errors.push("Department is required.");
   }
-  
+
   if (!location) {
     errors.push("Location is required.");
   }

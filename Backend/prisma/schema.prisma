@@ -42,11 +42,11 @@ model User {
 }
 
 model DeviceType {
-  id          Int         @id @default(autoincrement())
-  deviceType  String      @unique
-  createTime  DateTime    @default(now())
-  updateTime  DateTime    @updatedAt
-  inventories Inventory[] @relation("DeviceTypeInventory")
+  id              Int         @id @default(autoincrement())
+  deviceTypeName  String      @unique
+  createTime      DateTime    @default(now())
+  updateTime      DateTime    @updatedAt
+  inventories     Inventory[] @relation("DeviceTypeInventory")
 }
 
 model Inventory {
