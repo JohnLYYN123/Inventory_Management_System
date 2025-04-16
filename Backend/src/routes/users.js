@@ -3,7 +3,9 @@ const router = express.Router();
 const db = require("../database");
 const jwt = require("jsonwebtoken");
 const middleware = require("../middlewares/middleware");
+const jwtMiddleware = require("../middlewares/jwtMiddleware");
 const bcrypt = require("bcrypt");
+const { default: jwtTokenAuthentication } = require("../middlewares/jwtMiddleware");
 
 // Standard response format helper
 const formatResponse = (data, message = "") => ({
@@ -60,7 +62,7 @@ router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
 });
 
 //reset user password
-router.post("/:id/reset-password", async (req, res, next) => {
+router.post("/:id/reset-password", jwtTokenAuthentication    ,async (req, res, next) => {
   try {
     const { password } = req.body;
     if (!password) {
