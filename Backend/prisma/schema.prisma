@@ -38,6 +38,7 @@ model User {
   updateTime   DateTime      @updatedAt
   requests     Request[]     @relation("UserRequests")
   transactions Transaction[] @relation("UserTransactions")
+  inventories  Inventory[]   @relation("UserInventories")
 }
 
 model DeviceType {
@@ -54,8 +55,12 @@ model Inventory {
   status       Status
   createTime   DateTime      @default(now())
   updateTime   DateTime      @updatedAt
+  
   deviceTypeId Int
   deviceType   DeviceType    @relation("DeviceTypeInventory", fields: [deviceTypeId], references: [id])
+  
+  deviceUserId Int?
+  deviceUser   User?         @relation("UserInventories",fields:[deviceUserId],references:[id])
   requests     Request[]     @relation("InventoryRequests")
   transactions Transaction[] @relation("InventoryTransactions")
 }
@@ -89,8 +94,7 @@ model Transaction {
 }
 
 enum Role {
-  Internal
-  External
+  User
   Admin
 }
 
@@ -105,6 +109,12 @@ enum RequestStatus {
   Completed
   Denied
   Pending
+}
+
+enum Activity {
+  Borrow
+  Return
+  Retired
 }
 
 enum Activity {
