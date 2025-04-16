@@ -81,6 +81,10 @@ function AdminDevice() {
     
     const modeData = mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item=> item.status === mode.toLowerCase());
 
+    const filteredInventory = modeData.filter((device) =>
+        device.name.toLowerCase().includes(searchedDevice.toLowerCase())
+    );
+      
 
     const handleAddingNewDevice = async () => {
         const newId = Number(inventoryDeviceList[inventoryDeviceList.length - 1].id) + 1;
@@ -117,19 +121,6 @@ function AdminDevice() {
 
     return (
         <div className="px-10 py-3">
-            <div className="flex items-center justify-between mb-6">
-                <div className="items-center space-x-2">
-                    <Label htmlFor="switch" className="text-4xl font-bold mt-4">Admin Devices Management</Label>
-                    <span className="text-md font-medium px-4">Inventory List</span>
-                    <Switch 
-                        id="switch"
-                        checked={showMyDeviceList}
-                        onCheckedChange={(checked) => setShowMyDeviceList(checked)}
-                        className="mt-4 scale-130 data-[state=checked]:bg-green-500"
-                    />
-                    <span className="text-md font-medium px-4">My Device List</span>
-                </div>
-            </div>
 
             {/** toggle display switchs */}
             {showMyDeviceList ? (
@@ -166,7 +157,7 @@ function AdminDevice() {
             ) : (
                 <div>
                     <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-2xl font-bold mt-4">Inventory Device Management</h1>
+                        <h1 className="text-4xl font-bold mt-4">Inventory Device List</h1>
                         <div className="w-1/6">
                             <Dialog open={showNewDeviceDialog} onOpenChange={setShowNewDeviceDialog}>
                                 
@@ -245,6 +236,17 @@ function AdminDevice() {
                         </button>
                         ))}
                     </div>
+                    <div className="justify-front mb-4 gap-2">
+                        <div>
+                            <Input
+                            placeholder="Search devices..."
+                            className="w-80"
+                            type="text"
+                            value={searchedDevice}
+                            onChange={(e) => setSearchedDevice(e.target.value)}
+                            />
+                        </div>
+                    </div>
                     <table className="min-w-full table-auto boarder-collapse">
                         {/* table row heads */}
                         <thead>
@@ -259,7 +261,7 @@ function AdminDevice() {
                         </thead>
                         {/* table stuffing */}
                         <tbody>
-                            {modeData.map((req) => (
+                            {filteredInventory.map((req) => (
                                 <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
                                     <td className="p-3">{req.id}</td>
                                     <td className="p-3">{req.name}</td>

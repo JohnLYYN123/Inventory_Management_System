@@ -6,6 +6,7 @@ import Donut from "../components/PieChart";
 import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
     Dialog,
@@ -84,6 +85,7 @@ function AdminRequestManagement() {
     const [viewedRequest, setViewedRequest] = useState(null);
 
     const [uploadFile, setUploadFile] = useState(null);
+    const [adminComment, setAdminComment] = useState("");
 
     const requestIdPrefix = 'REQ_'
 
@@ -92,6 +94,10 @@ function AdminRequestManagement() {
     const curRequest = requests.slice((page - 1) * itemPerPage, page * itemPerPage);
 
     const modeData = mode === "all" ? requests : requests.filter(item=> item.status === mode);
+
+    useEffect(() => {
+        setRequestData(mockRequestData);
+      }, []);
 
     const handleWithdraw =  async (id) => {
         setRequests(prev => prev.filter(req => req.id !== id));
@@ -124,10 +130,21 @@ function AdminRequestManagement() {
 
     const handleApproveRequest =  async (request) => {
         // passing to API submission
+        // check of passed info
+        if (!uploadFile) {
+            toast.error("Please upload a support file before approving");
+            return;
+        }
+
+        if(!adminComment) {
+            toast.error("Please enter a comment before approving.");
+            return;
+        }
+
         const formData = new FormData();
         formData.append("requestId", request.id);
         formData.append("supportFile", uploadFile);
-        formData.append("adminComment", dfkjlhflajkhflja);
+        formData.append("adminComment", adminComment);
 
         console.log(formData);
 
@@ -150,6 +167,7 @@ function AdminRequestManagement() {
             setRequestData(prev => prev.filter(req => req.id !== request.id));
             setUploadFile(null);
             setShowManagementDialog(false);
+            setAdminComment("");
         } catch (error) {
             console.error("Error when doing submission:", error);
             toast.error("Error when doing submission. Please try again.");
@@ -157,34 +175,32 @@ function AdminRequestManagement() {
 
       };
       
-      const handleDeclineRequest = async (request) => {
+    const handleDeclineRequest = async (request) => {
+        // only admin is commentd
+        if(!adminComment) {
+            toast.error("Please enter a reason before declining");
+            return;
+        }
+
         const formData = new FormData();
         formData.append("requestId", request.id);
         formData.append("supportFile", uploadFile);
-        formData.append("adminComment", dfkjlhflajkhflja);
+        formData.append("adminComment", adminComment);
         
         toast.error(`Request made by ${request.requestedBy} was declined`);
         setRequestData(prev => prev.filter(req => req.id !== request.id));
         setShowManagementDialog(false);
-      };
+        setUploadFile(null);
+        setAdminComment("");
+    };
 
-
-  useEffect(() => {
-    setRequestData(mockRequestData);
-  }, []);
+    const isApproveDisabled = !uploadFile || !adminComment;
+    const isDeclineDisabled = !adminComment;
 
   return (<div className="px-10 py-3">
               <div className="flex items-center justify-between mb-6">
                   <div className="items-center space-x-2">
-                      <Label htmlFor="switch" className="text-4xl font-bold mt-4">Request Management</Label>
-                      <span className="text-md font-medium px-4">Manage Requests</span>
-                      <Switch 
-                          id="switch"
-                          checked={showMyRequestList}
-                          onCheckedChange={(checked) => setShowMyRequestList(checked)}
-                          className="mt-4 scale-130 data-[state=checked]:bg-green-500"
-                      />
-                      <span className="text-md font-medium px-4">My Request List</span>
+                      <Label htmlFor="switch" className="text-4xl font-bold mt-4">Request Management for ADMIN</Label>
                   </div>
               </div>
 
@@ -197,7 +213,7 @@ function AdminRequestManagement() {
                             <th className="p-3">Device</th>
                             <th className="p-3">Requested By</th>
                             <th className="p-3">Date</th>
-                            <th className="p-3 item-center">More Actions</th>
+                            <th className="p-3 flex items-center justify-center gap-2">More Actions</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -207,28 +223,19 @@ function AdminRequestManagement() {
                                 <td className="p-3">{req.device}</td>
                                 <td className="p-3">{req.requestedBy}</td>
                                 <td className="p-3">{req.date}</td>
-                                <td className="p-3 flex items-center gap-2">
-                                    <Eye 
-                                        size={18}
-                                        className="text-blue-500 cursor-pointer"
-                                        onClick={() => {
-                                                setViewedRequest(req);
-                                                setShowManagementDialog(true);
-                                            }   
-                                        }
-                                    />
-                                    <CheckCircle 
-                                        size={18}
-                                        className="text-green-500 cursor-pointer"
-                                        onClick={() => {
-                                            setViewedRequest(req);
-                                            setShowManagementDialog(true);}}
-                                    />
-                                    <XCircle 
-                                        size={18}
-                                        className="text-red-500 cursor-pointer"
-                                        onClick={() => handleDeclineRequest(req)}
-                                    />
+                                <td className="p-3 text-center">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Eye 
+                                            size={22}
+                                            className="text-blue-500 cursor-pointer hover:scale-125 transition-transform"
+                                            onClick={() => {
+                                                    setViewedRequest(req);
+                                                    setShowManagementDialog(true);
+                                                }   
+                                            }
+                                        />
+                                    </div>
+                                    
                                 </td>
                             </tr>
                         ))}
@@ -262,7 +269,11 @@ function AdminRequestManagement() {
                                 </div>
                                 <div>
                                 <Label className="text-md font-medium">Reason:</Label>
-                                <div className="text-md">{viewedRequest.reason || "N/A"}</div>
+                                <Textarea
+                                    value={viewedRequest.reason}
+                                    readOnly 
+                                    className="text-md"
+                                />
                                 </div>
                                 <div>
                                     <Label className="text-md font-medium">Admin Upload Support Files:</Label>
@@ -277,22 +288,30 @@ function AdminRequestManagement() {
                                         </p>
                                     )}
                                 </div>
+                                <div>
+                                    <Label className="text-md font-medium">Admin Comment:</Label>
+                                    <Textarea
+                                        placeholder="Please enter your comment here" 
+                                        onChange={(e) => setAdminComment(e.target.value)}
+                                        value={adminComment}
+                                    />
+                                </div>
                             </div>
                             <DialogFooter className="flex justify-end gap-2 mt-4">
                                 <Button variant="default" onClick={() => setShowManagementDialog(false)}>Close</Button>
-                                <Button variant="buttonBlue" onClick={() => 
-                                    {
-                                        if(!uploadFile){
-                                            toast.error("Please upload support files before approving the request.");
-                                            return;
-                                        }
-                                        handleApproveRequest(viewedRequest);
+                                <Button variant="buttonBlue" 
+                                    disabled={isApproveDisabled}
+                                    onClick={() => 
+                                        {handleApproveRequest(viewedRequest);}
                                     }
-                                }
                                 >
                                     Approve Request
                                 </Button>
-                                <Button variant="destructive" onClick={() => handleDeclineRequest(viewedRequest)}>Decline Request</Button> 
+                                <Button variant="destructive" 
+                                    disabled={isDeclineDisabled}
+                                    onClick={() => handleDeclineRequest(viewedRequest)}>
+                                        Decline Request
+                                </Button> 
                             </DialogFooter>
                             </DialogContent>
                         </Dialog>
