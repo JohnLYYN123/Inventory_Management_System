@@ -107,8 +107,8 @@ const validateRequestInput = (req) => {
 
   if (!status) {
     errors.push("Status is required.");
-  } else if (status !== "approved" && status !== "pending" && status !== "rejected") {
-    errors.push("Invalid status. Allowed values are 'approved', 'pending', 'rejected'.");
+  } else if (status !== "Available" && status !== "Unavailable" && status !== "Pending" && status !== "Retired") {
+    errors.push("Invalid status. Allowed values are 'Available', 'Unavailable', 'Pending', 'Retired'.");
   }
 
   if (requestorId && !isNaN(requestorId)) {
@@ -178,7 +178,7 @@ const validateUserInput = (req) => {
 
   if (!role) {
     errors.push("Role is required.");
-  } else if (role != "Admin" && role != "Internal" && role != "External") {
+  } else if (role != "Admin" && role != "User") {
     errors.push("Role must be either 'Admin', 'Internal', or 'External'.");
   }
 

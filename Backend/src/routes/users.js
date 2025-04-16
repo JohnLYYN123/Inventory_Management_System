@@ -60,7 +60,7 @@ router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
 });
 
 //reset user password
-router.post("/:id/reset-password", middleware.validateRequestInput, async (req, res, next) => {
+router.post("/:id/reset-password", async (req, res, next) => {
   try {
     const { password } = req.body;
     if (!password) {
