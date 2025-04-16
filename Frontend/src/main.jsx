@@ -7,9 +7,10 @@ import Login from './route/Login.jsx';
 import Layout from './route/Layout.jsx';
 //import RequestManagement from './route/RequestManagement.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import Profile from './route/Profile.jsx';
+//import Profile from './route/Profile.jsx';
 import MyDeviceRoutes from './route/MyDeviceRoutes.jsx';
 import RequestManagementRoutes from './route/RequestManagementRoutes.jsx';
+import ProfileRoutes from './route/ProfileRoutes.jsx';
 
 
 const router = createBrowserRouter([
@@ -31,7 +32,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/profile',
-        element: <Profile />
+        element: <ProfileRoutes />
       },
     ]
   },
