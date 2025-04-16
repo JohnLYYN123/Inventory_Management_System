@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require("../database");
 const jwt = require("jsonwebtoken");
 const middleware = require("../middlewares/middleware");
+const bcrypt = require("bcrypt");
 
 // Standard response format helper
 const formatResponse = (data, message = "") => ({
@@ -29,8 +30,8 @@ router.post("/", async (req, res, next) => {
     }
     const newUser = await db.createUser(req.body);
 
-    // generate a token for the user
-    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+    // generate a token for the new user
+    const token = jwt.sign({ id: newUser.id, role: newUser.role }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRATION
     });
 
@@ -96,11 +97,20 @@ router.post("/login", async (req, res, next) => {
       return res.status(404).json(formatResponse(null, "User not found"));
     }
 
-    if (user.password !== password) {
+    if (user.password !== bcrypt(password)) {
       return res.status(401).json(formatResponse(null, "Invalid password"));
     }
 
-    return res.status(200).json(formatResponse(user, "Login successful"));
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRATION
+    });
+
+    const retData = {
+      identity: user, 
+      token: token
+    }
+
+    return res.status(200).json(formatResponse(retData, "Login successful"));
   } catch (error) {
     next(error);
   }
