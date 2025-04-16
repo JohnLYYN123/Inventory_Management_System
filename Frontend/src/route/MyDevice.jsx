@@ -12,6 +12,26 @@ import {
 } from "@/components/ui/pagination";
 
 
+const mockDevice = [
+  { name: "MacBook Pro M2", type: "laptop", borrowed: "2025-03-14 09:30 AM" },
+  { name: "iPhone 15 Pro", type: "mobile", borrowed: "2025-03-14 10:15 AM" },
+  { name: "Dell XPS 15", type: "laptop", borrowed: "2025-03-13 05:45 PM" },
+  { name: "iPad Pro 2024", type: "tablet", borrowed: "2025-03-14 11:20 AM" },
+  { name: "Surface Laptop Studio", type: "laptop", borrowed: "2025-03-14 08:55 AM" },
+  { name: "Samsung Galaxy S25", type: "mobile", borrowed: "2025-03-12 03:30 PM" },
+  { name: "Samsung Galaxy S25", type: "mobile", borrowed: "2025-03-12 03:30 PM" },
+  { name: "Samsung Galaxy S25", type: "mobile", borrowed: "2025-03-12 03:30 PM" },
+  { name: "Samsung Galaxy S25", type: "mobile", borrowed: "2025-03-12 03:30 PM" },
+  { name: "Samsung Galaxy S25", type: "mobile", borrowed: "2025-03-12 03:30 PM" },
+
+];
+
+const deviceDistribution = [
+  { name: "Laptop", value: 3 },
+  { name: "Mobile", value: 2 },
+  { name: "Tablet", value: 1 },
+];
+
 // Helper function to generate page numbers with ellipses.
 function getPageNumbers(currentPage, totalPages, maxVisible = 5) {
   if (totalPages <= maxVisible) {
@@ -69,15 +89,16 @@ function MyDevice() {
     fetchDevices();
   }, []);
 
+  // Reset page to 1 when the search query changes.
+  useEffect(() => {
+    //setDeviceList(mockDevice);
+    setCurrentPage(1);
+  }, [searchedDevice]);
+
   // Filter the device list based on search input.
   const filteredDeviceList = deviceList.filter((device) =>
     device.name.toLowerCase().includes(searchedDevice.toLowerCase())
   );
-
-  // Reset page to 1 when the search query changes.
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchedDevice]);
 
   // Pagination calculations.
   const totalPages = Math.ceil(filteredDeviceList.length / itemsPerPage);
@@ -139,7 +160,7 @@ function MyDevice() {
         ))}
       </div>
 
-      {/* Truncated Pagination Controls */}
+      {/* Truncated Pagination Controls
       <div className="flex justify-center items-center space-x-2 mb-8">
         {pageNumbers.map((page, index) => {
           if (page === "…") {
@@ -163,8 +184,8 @@ function MyDevice() {
             </button>
           );
         })}
-      </div>
-      {/* {totalPages > 1 && (
+      </div> */}
+      {totalPages > 1 && (
         <Pagination className="mt-5 justify-center items-center">
             <PaginationContent>
                 <PaginationItem>
@@ -176,19 +197,19 @@ function MyDevice() {
 
                 <PaginationItem>
                       <span className="text-sm text-muted-foreground px-3">
-                        Page {currentPage} of {total}
+                        Page {currentPage} of {totalPages}
                     </span>
                 </PaginationItem>
 
                 <PaginationItem>
                     <PaginationNext
                         onClick={() => setCurrentPage((p) => Math.max(p + 1, 1))}
-                        className={currentPage !== total ? "" : "opacity-40" }
+                        className={currentPage !== totalPages ? "" : "opacity-40" }
                     />
                 </PaginationItem>
             </PaginationContent>
         </Pagination>
-    )} */}
+    )}
       <h2 className="text-2xl font-bold mb-4">Device Distribution</h2>
       <Donut data={computedDistribution} />
     </div>
