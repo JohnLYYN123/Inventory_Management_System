@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../database");
+const jwt = require("jsonwebtoken");
 const middleware = require("../middlewares/middleware");
 
 // Standard response format helper
@@ -27,6 +28,13 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json(formatResponse(null, "Email already exists"));
     }
     const newUser = await db.createUser(req.body);
+
+    // creatio t 
+
+
+
+
+
     res.status(201).json(formatResponse(newUser, "User created"));
   } catch (error) {
     next(error);
