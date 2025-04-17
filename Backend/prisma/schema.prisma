@@ -116,9 +116,3 @@ enum Activity {
   Return
   Retired
 }
-
-enum Activity {
-  Borrow
-  Return
-  Retired
-}
