@@ -79,7 +79,7 @@ const mockData = [
 
 function AdminRequestManagement() {
     const [showMyRequestList, setShowMyRequestList] = useState(false);
-    const [requestData, setRequestData] = useState(null);
+    const [requestData, setRequestData] = useState([]);
     const [mode, setMode] = useState("all");
     const [requests, setRequests] = useState(mockData);
     const [page, setPage] = useState(1); // used for 
@@ -101,7 +101,12 @@ function AdminRequestManagement() {
 
     const requestIdPrefix = 'REQ_'
 
-    const modeData = mode === "all" ? requests : requests.filter(item=> item.status === mode);
+    useEffect(() => {
+        setCurrentPage(1); 
+        setRequestData(mockRequestData);
+      }, []);
+
+    const modeData = mode === "all" ? requestData : requestData.filter(item=> item.status === mode);
 
     // pagination calculations
     const total = Math.ceil(modeData.length / itemsPerPage);
@@ -109,10 +114,7 @@ function AdminRequestManagement() {
     const endIndex = startIndex + itemsPerPage;
     const paginatedRequest = modeData.slice(startIndex, endIndex);
 
-    useEffect(() => {
-        setCurrentPage(1); 
-        setRequestData(mockRequestData);
-      }, []);
+    
 
     const handleWithdraw =  async (id) => {
         setRequests(prev => prev.filter(req => req.id !== id));

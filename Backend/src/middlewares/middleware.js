@@ -143,7 +143,7 @@ const validateRequestInput = (req) => {
 }
 
 const validateUserInput = (req) => {
-  const { userName, email, department, location, displayName, password, role } = req.body;
+  const { userName, email, password, role } = req.body;
   const errors = [];
 
   if (!userName) {
@@ -162,18 +162,6 @@ const validateUserInput = (req) => {
     errors.push("Email is required.");
   } else if (isAllWhitespace(email)) {
     errors.push("Email cannot be empty or whitespace.");
-  }
-
-  if (!department) {
-    errors.push("Department is required.");
-  }
-
-  if (!location) {
-    errors.push("Location is required.");
-  }
-
-  if (!displayName) {
-    errors.push("Display name is required.");
   }
 
   if (!role) {
