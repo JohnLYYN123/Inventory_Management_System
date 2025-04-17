@@ -62,12 +62,14 @@ router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
 });
 
 //reset user password
-router.post("/:id/reset-password", jwtTokenAuthentication    ,async (req, res, next) => {
+router.post("/:id/reset-password", jwtMiddleware.jwtTokenAuthentication ,async (req, res, next) => {
   try {
     const { password } = req.body;
     if (!password) {
       return res.status(400).json(formatResponse(null, "Password is required"));
     }
+
+    console.log("user id", req.params.id);
     
     const userForUpdate = await db.getUserById(parseInt(req.params.id));
     if (!userForUpdate) {
@@ -75,6 +77,7 @@ router.post("/:id/reset-password", jwtTokenAuthentication    ,async (req, res, n
     }
 
     const email = userForUpdate.email;
+    console.log("user email", email);
 
     const userUpdated = await db.resetPassword(email, password);
     if (!userUpdated) {
