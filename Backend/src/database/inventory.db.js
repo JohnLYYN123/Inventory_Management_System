@@ -129,13 +129,13 @@ module.exports = {
     // Retire inventory
     // - Only inventory with "Available" or "Pending" status can be retired
     // - After retiring, the inventory status will become "Retired"
-    // - All pending requests for this inventory will be denyed, and transaction will be recorede.
+    // - All pending requests for this inventory will be denyed, and transaction will be recorded.
     // Input: inventory id and admin id (user id of admin account)
-    retireInventory: async (id, adminId) => {
+    retireInventory: async (deviceId, adminId, comment) => {
         try {
             // Check inventory and its current status
             const inventory = await prisma.inventory.findUnique({
-                where: { id: id },
+                where: { id: deviceId },
                 include: {
                     request: true,
                 },
@@ -166,17 +166,21 @@ module.exports = {
             // Create a retirement transaction
             await prisma.transactions.create({
                 data: {
-                    deviceId: id,
+                    deviceId: deviceId,
                     executorId: adminId,
                     activity: "Retired",
-                    comment: "Device retired by admin",
-                }
+                    comment: comment,
+                },
+                include: {
+                    executor: true,
+                    device: true,
+                },
             });
 
 
             // Update inventory status and unassign user
             const retiredInventory = await prisma.inventory.update({
-                where: { id: id },
+                where: { id: deviceId },
                 data: {
                     status: "Retried",
                     deviceUserId: null,

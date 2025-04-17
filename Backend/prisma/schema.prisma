@@ -7,6 +7,9 @@ A user can make multiple requests, but each request belongs to a single user.
 User (1) ↔ (M) Transaction 
 A user can execute multiple transactions (borrowing, returning devices, etc.).
 
+User (1) ↔ (M) Inventory
+A user can borrow multiple inventories, but each inventory can only borrowed by a single user at a time. 
+
 Inventory (1) ↔ (M) Request
 A device can be requested multiple times, but each request is for a single device.
 
