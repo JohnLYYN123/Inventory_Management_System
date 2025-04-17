@@ -1,11 +1,15 @@
 const express = require("express");
 const routes = require("./routes");
 const middleware = require("./middlewares/middleware");
+const cors = require("cors");
 
 const app = express();
 const PORT = 3000;
 
-// Middleware
+
+app.use(cors());
+
+
 app.use(express.json());
 app.use(middleware.requestLogger);
 
