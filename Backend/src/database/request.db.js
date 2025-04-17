@@ -74,7 +74,7 @@ module.exports = {
                 deviceId: deviceId || undefined,
             };
 
-            return await prisma.inventory.findMany({
+            return await prisma.request.findMany({
                 where: whereClause,
                 include: {
                     requestor: true,

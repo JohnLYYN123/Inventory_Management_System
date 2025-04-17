@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 const middleware = require("../middlewares/middleware");
+const jwtMiddleware = require("../middlewares/jwtMiddleware");
 
 // Standard response format helper
 const formatResponse = (data, message = "") => ({
@@ -10,8 +11,14 @@ const formatResponse = (data, message = "") => ({
     message
 });
 
-router.get("/", middleware.validateRequestQueryParams, async (req, res, next) => {
+router.get("/", middleware.validateRequestQueryParams, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
+        if (req.query.requestorId) {
+            req.query.requestorId = parseInt(req.query.requestorId);
+        }
+        if (req.query.deviceId) {
+            req.query.deviceId = parseInt(req.query.deviceId);
+        }
         const requests = await db.getAllRequests(req.query);
         res.status(200).json(formatResponse(requests));
     } catch (error) {
