@@ -12,8 +12,12 @@ const formatResponse = (data, message = "") => ({
 
 router.get("/", middleware.validateRequestQueryParams, async (req, res, next) => {
     try {
-        const requestID = parseInt(req.query.requestId);
-        req.query.requestId = requestID;
+        if (req.query.requestorId) {
+            req.query.requestorId = parseInt(req.query.requestorId);
+        }
+        if (req.query.deviceId) {
+            req.query.deviceId = parseInt(req.query.deviceId);
+        }
         const requests = await db.getAllRequests(req.query);
         res.status(200).json(formatResponse(requests));
     } catch (error) {
