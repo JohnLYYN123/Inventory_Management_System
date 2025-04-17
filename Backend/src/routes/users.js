@@ -80,10 +80,11 @@ router.post("/:id/reset-password", jwtMiddleware.jwtTokenAuthentication ,async (
     console.log("user email", email);
 
     const userUpdated = await db.resetPassword(email, password);
+    console.log("user updated", userUpdated);
     if (!userUpdated) {
       return res.status(404).json(formatResponse(null, "password update failed"));
     }
-    return res.status(200).json(formatResponse(user, "Password reset successfully"));
+    return res.status(200).json(formatResponse(userUpdated, "Password reset successfully"));
   } catch (error) {
     next(error);
   }
