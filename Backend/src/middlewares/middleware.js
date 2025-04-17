@@ -159,14 +159,8 @@ const validateRequestQueryParams = (req, res, next) => {
 };
 
 const validateRequestInput = (req) => {
-  const { status, requestorId, deviceId, adminComment, requestDetail } = req.body;
+  const { requestorId, deviceId } = req.body;
   const errors = [];
-
-  if (!status) {
-    errors.push("Status is required.");
-  } else if (status !== "Available" && status !== "Unavailable" && status !== "Pending" && status !== "Retired") {
-    errors.push("Invalid status. Allowed values are 'Available', 'Unavailable', 'Pending', 'Retired'.");
-  }
 
   if (requestorId && !isNaN(requestorId)) {
     console.log("Requestor ID is", requestorId);
@@ -178,18 +172,6 @@ const validateRequestInput = (req) => {
     errors.push("Device ID is required.");
   } else if (isNaN(deviceId)) {
     errors.push("Device ID must be a number.");
-  }
-
-  if (adminComment) {
-    if (isAllWhitespace(adminComment)) {
-      errors.push("Admin comment cannot be empty or whitespace.");
-    }
-  }
-
-  if (requestDetail) {
-    if (isAllWhitespace(requestDetail)) {
-      errors.push("Request detail cannot be empty or whitespace.");
-    }
   }
 
   if (errors.length > 0) {
