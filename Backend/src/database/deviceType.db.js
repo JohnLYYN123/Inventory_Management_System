@@ -10,8 +10,10 @@ module.exports = {
             //deviceTypeName uniqueness check
             console.log("deviceTypeData.deviceTypeName →", deviceTypeData.deviceTypeName);
 
-            const existingDeviceType = await prisma.deviceType.findFirst({
-                where: { deviceTypeName: deviceTypeData.deviceTypeName },
+            const existingDeviceType = await prisma.deviceType.findUnique({
+                where: { 
+                    deviceTypeName: deviceTypeData.deviceTypeName 
+                },
             });
 
             if (existingDeviceType) {
