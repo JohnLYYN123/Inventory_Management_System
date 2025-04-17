@@ -26,4 +26,6 @@ function jwtTokenAuthentication(req, res, next) {
 
 }
 
-export default jwtTokenAuthentication;
+module.exports = {
+    jwtTokenAuthentication
+};
