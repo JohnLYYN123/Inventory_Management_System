@@ -4,12 +4,49 @@ const db = require('../database');
 const s3 = require('../utils/doSpaces');
 const sharp = require('sharp')
 const { upload } = require('../middlewares/upload');
+const { validateResourceId } = require('../middlewares/middleware');
 
 const formatResponse = (data, message = "") => ({
     success: true,
     data,
     message
 });
+
+// GET /api/transactions/:id
+router.get("/:id", validateResourceId, async (req, res, next) => {
+    try {
+        const transactionId = parseInt(req.params.id);
+        const transaction = await db.getTransactionById(transactionId);
+
+        if (!transaction) {
+            return res.status(404).json(formatResponse(null, "Inventory not found"));
+        }
+
+        return res.status(200).json(formatResponse(transaction));
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/transactions/:id
+router.get("/", validateTransactionFilters, async (req, res, next) => {
+    try {
+        const { activity, deviceId, executorId } = req.query;
+
+        const filters = {
+            activity: activity || undefined,
+            deviceId: deviceId ? parseInt(deviceId) : undefined,
+            executorId: executorId ? parseInt(executorId) : undefined,
+        };
+
+        const transactions = await db.getAllTransactions(filters);
+
+        res.status(200).json(formatResponse(transactions));
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 // Handle file uploads
 router.post('/upload/:deviceId/:transactionId/:activity', upload.single('file'), async (req, res) => {
@@ -42,8 +79,21 @@ router.post('/upload/:deviceId/:transactionId/:activity', upload.single('file'),
     } catch (error) {
         next(error);
     }
+});
 
+//PUT /api/inventory/:id/return
+router.put("/:id/return", validateResourceId, validateReturnInput, async (req, res, next) => {
+    try {
+        const deviceId = parseInt(req.params.id);
+        const { userId, comment } = req.body;
 
-})
+        const transaction = await db.handleReturn(deviceId, parseInt(userId), comment);
+
+        res.status(200).json(formatResponse(transaction, "Device returned successfully"));
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 module.exports = router;

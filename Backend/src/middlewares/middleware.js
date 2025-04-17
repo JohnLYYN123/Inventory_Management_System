@@ -64,7 +64,7 @@ const validateInventoryInput = (req) => {
   } else {
     return [];
   }
-}
+};
 
 const validateInventoryUpdateInput = (req, res, next) => {
   const { deviceName, deviceTypeId } = req.body;
@@ -128,7 +128,7 @@ const validateDeviceTypeInput = (req) => {
   } else {
     return [];
   }
-}
+};
 
 const validateRequestQueryParams = (req, res, next) => {
   const { status, requestorId, deviceId } = req.query;
@@ -156,7 +156,7 @@ const validateRequestQueryParams = (req, res, next) => {
     return res.status(400).json({ errors });
   }
   next();
-}
+};
 
 const validateRequestInput = (req) => {
   const { status, requestorId, deviceId, adminComment, requestDetail } = req.body;
@@ -197,7 +197,7 @@ const validateRequestInput = (req) => {
   } else {
     return [];
   }
-}
+};
 
 const validateUserInput = (req) => {
   const { userName, email, password, role } = req.body;
@@ -232,7 +232,57 @@ const validateUserInput = (req) => {
   } else {
     return [];
   }
-}
+};
+
+const validateTransactionFilters = (req, res, next) => {
+  const { activity, deviceId, executorId } = req.query;
+  const errors = [];
+
+  if (deviceId !== undefined && isNaN(deviceId)) {
+    errors.push("deviceId must be a number.");
+  }
+
+  if (executorId !== undefined && isNaN(executorId)) {
+    errors.push("executorId must be a number.");
+  }
+
+  if (activity !== undefined && typeof activity !== "string") {
+    errors.push("activity must be a string.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      errors,
+      message: "Invalid query parameters",
+    });
+  }
+
+  next();
+};
+
+const validateReturnInput = (req, res, next) => {
+  const { userId, comment } = req.body;
+  const errors = [];
+
+  if (userId === undefined || isNaN(userId)) {
+    errors.push("Valid userId is required.");
+  }
+
+  if (comment !== undefined && typeof comment !== "string") {
+    errors.push("Comment must be a string.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      errors,
+      message: "Validation failed",
+    });
+  }
+
+  next();
+};
 
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
@@ -250,5 +300,7 @@ module.exports = {
   validateRequestQueryParams,
   validateRequestInput,
   validateUserInput,
+  validateTransactionFilters,
+  validateReturnInput,
   errorHandler
 };
