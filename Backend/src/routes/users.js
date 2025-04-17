@@ -48,10 +48,11 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// get user by id
-router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
+// get user by email
+router.get("/:email", async (req, res, next) => {
   try {
-    const user = await db.getUserById(parseInt(req.params.id));
+    const userEmail = req.params.email;
+    const user = await db.getUserByEmail(userEmail);
     if (!user) {
       return res.status(404).json(formatResponse(null, "User not found"));
     }
@@ -117,6 +118,29 @@ router.post("/login", async (req, res, next) => {
     }
 
     return res.status(200).json(formatResponse(retData, "Login successful"));
+  } catch (error) {
+    next(error);
+  }
+}
+);
+
+//edit user profile
+router.put("/:email/edit", jwtMiddleware.jwtTokenAuthentication ,async (req, res, next) => {
+  try {
+    const userEmail = req.params.email;
+    const { userName, email, password } = req.body;
+
+    if (!userName || !email || !password) {
+      return res.status(400).json(formatResponse(null, "User name, email and role are required"));
+    }
+
+    const user = await db.getUserByEmail(userEmail);
+    if (!user) {
+      return res.status(404).json(formatResponse(null, "User not found"));
+    }
+
+    const updatedUser = await db.updateUserProfile(user.id, req.body);
+    return res.status(200).json(formatResponse(updatedUser, "User updated successfully"));
   } catch (error) {
     next(error);
   }
