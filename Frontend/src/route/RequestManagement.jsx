@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Pencil, X } from "lucide-react";
+import { toast } from "sonner";
 import { 
   Pagination, 
   PaginationContent, 
@@ -46,9 +47,11 @@ function RequestManagement() {
   const [curEditRequest, setCurEditRequest] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
   const [newRequestDialog, setNewRequestDialog] = useState(false);
+  const [availableDevices, setAvailableDevices] = useState([]);
 
   // New Request Dialog state
   const [newDevice, setNewDevice] = useState("");
+  const [deviceId, setDeviceId] = useState("");
   const [newRequestInfo, setNewRequestInfo] = useState("");
   // State to control the visibility of the device dropdown
   const [showDropdown, setShowDropdown] = useState(false);
@@ -60,6 +63,10 @@ function RequestManagement() {
 
   // Filter requests based on selected mode.
   const modeData = mode === "all" ? requests : requests.filter(item => item.status === mode);
+
+  // identity related data
+  const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;
+  const token = JSON.parse(localStorage.getItem("user")).data.token;
 
   // pagination calculations
   const total = Math.ceil(modeData.length / itemsPerPage);
@@ -82,22 +89,66 @@ function RequestManagement() {
   };
 
   const addNewRequest = async () => {
-    const newId = Math.max(...requests.map(r => r.id)) + 1;
+    console.log("Adding new request:", newDevice, newRequestInfo, deviceId);
     const newRequest = {
-      id: newId,
-      status: "pending",
-      date: new Date().toISOString().split("T")[0],
-      device: newDevice,
+      requestorId: userInfo.id,
+      deviceId: deviceId,
       info: newRequestInfo,
     };
-    setRequests([...requests, newRequest]);
-    setNewDevice("");
-    setNewRequestInfo("");
-  };
+
+    try {
+      const response = await fetch("http://localhost:3000/api/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newRequest),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create request");
+      }
+
+      const data = await response.json();
+      console.log("New request created:", data);
+      toast.success("New request created successfully!");
+
+      setRequests([...requests, newRequest]);
+      setNewDevice("");
+      setNewRequestInfo("");
+    } catch (error) {
+      console.error("Error creating new request:", error);
+    }
+  }
 
   useEffect(() => {
+    // fetch all requests from the server
+    const fetchRequests = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log("response", response);
+        if (!response.ok) {
+          throw new Error("Failed to fetch requests");
+        }
+        const data = await response.json();
+        console.log("data", data);
+        setRequests(data.data);
+      }
+      catch (error) {
+        console.error("Error fetching requests:", error);
+      }
+    };
     setCurrentPage(1);
-  }, [mode, requests]);
+    fetchRequests();
+  }, []);
 
   // === Device Search Dropdown for New Request ===
 
@@ -112,32 +163,73 @@ function RequestManagement() {
     { id: 5, name: "Surface Laptop Studio" }
   ];
 
-  /* Production Version:
-  const [availableDevices, setAvailableDevices] = useState([]);
+  //Production Version:
   
+  
+  // useEffect(() => {
+  //   const fetchAvailableDevices = async () => {
+  //     try {
+  //       const response = await fetch(`http://localhost:3000/api/available-devices?search=${encodeURIComponent(newDevice)}`);
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch available devices");
+  //       }
+  //       const data = await response.json();
+  //       setAvailableDevices(data);
+  //     } catch (error) {
+  //       console.error("Error fetching available devices:", error);
+  //     }
+  //   };
+  //   if (newDevice) {
+  //     fetchAvailableDevices();
+  //     setShowDropdown(true);
+  //   }
+  // }, [newDevice]);
   useEffect(() => {
+    const controller = new AbortController();
+  
     const fetchAvailableDevices = async () => {
       try {
-        const response = await fetch(`http://localhost:4000/api/available-devices?search=${encodeURIComponent(newDevice)}`);
+        const response = await fetch(
+          `http://localhost:3000/api/inventory?deviceName=${encodeURIComponent(newDevice)}&status=Available`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch available devices");
         }
         const data = await response.json();
-        setAvailableDevices(data);
+        console.log("Available devices data:", data);
+        setAvailableDevices(data.data); // assuming backend returns { data: [...] }
       } catch (error) {
-        console.error("Error fetching available devices:", error);
+        if (error.name !== "AbortError") {
+          console.error("Error fetching available devices:", error);
+        }
       }
     };
+  
     if (newDevice) {
-      fetchAvailableDevices();
-      setShowDropdown(true);
+      const debounce = setTimeout(() => {
+        fetchAvailableDevices();
+        setShowDropdown(true);
+      }, 300);
+  
+      return () => {
+        clearTimeout(debounce);
+        controller.abort();
+      };
     }
   }, [newDevice]);
-  */
+  
+  
   
   // Using dummy data for now.
-  const filteredAvailableDevices = dummyAvailableDevices.filter(device =>
-    device.name.toLowerCase().includes(newDevice.toLowerCase())
+  const filteredAvailableDevices = availableDevices.filter(device =>
+    device.deviceName.toLowerCase().includes(newDevice.toLowerCase())
   );
 
   return (
@@ -184,12 +276,13 @@ function RequestManagement() {
                           <div
                             key={device.id}
                             onClick={() => {
-                              setNewDevice(device.name);
+                              setNewDevice(device.deviceName); // Set the selected device name in the input field.
+                              setDeviceId(device.id); // Set the selected device ID.
                               setShowDropdown(false); // Hide the dropdown upon selection.
                             }}
                             className="p-2 cursor-pointer hover:bg-gray-100"
                           >
-                            {device.name}
+                            {device.deviceName}
                           </div>
                         ))}
                       </div>
@@ -213,7 +306,7 @@ function RequestManagement() {
                   Cancel
                 </Button>
                 <Button
-                  variant="default"
+                  variant="buttonBlue"
                   onClick={() => {
                     addNewRequest();
                     setNewRequestDialog(false);
