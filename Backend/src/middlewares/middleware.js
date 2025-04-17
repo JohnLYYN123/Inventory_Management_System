@@ -119,7 +119,7 @@ const validateDeviceTypeInput = (req) => {
   const errors = [];
   if (!deviceTypeName) {
     errors.push("Device type name is required.");
-  } else if (isAllWhitespace(deviceType)) {
+  } else if (isAllWhitespace(deviceTypeName)) {
     errors.push("Device type name cannot be empty or whitespace.");
   }
 

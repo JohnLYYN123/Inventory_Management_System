@@ -8,7 +8,9 @@ module.exports = {
     createDeviceType: async (deviceTypeData) => {
         try {
             //deviceTypeName uniqueness check
-            const existingDeviceType = await prisma.deviceType.findUnique({
+            console.log("deviceTypeData.deviceTypeName →", deviceTypeData.deviceTypeName);
+
+            const existingDeviceType = await prisma.deviceType.findFirst({
                 where: { deviceTypeName: deviceTypeData.deviceTypeName },
             });
 
