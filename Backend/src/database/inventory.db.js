@@ -56,7 +56,7 @@ module.exports = {
     // - deviceUserId: Int
     getAllInventories: async (filters = {}) => {
         try {
-            const { deviceName, status, deviceTypeId } = filters;
+            const { deviceName, status, deviceTypeId, deviceUserId } = filters;
 
             const whereClause = {
                 deviceName: deviceName || undefined,

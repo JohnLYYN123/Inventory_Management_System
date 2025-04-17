@@ -35,7 +35,7 @@ const validateResourceId = (req, res, next) => {
 };
 
 const validateInventoryInput = (req) => {
-  const { deviceName, status, deviceTypeId } = req.body;
+  const { deviceName, status, deviceTypeId, deviceUserId } = req.body;
   const errors = [];
 
   if (!deviceName) {
@@ -50,12 +50,69 @@ const validateInventoryInput = (req) => {
     errors.push("Status cannot be empty or whitespace.");
   }
 
+  if (deviceTypeId === undefined || isNaN(deviceTypeId)) {
+    errors.push("Valid deviceTypeId is required.");
+  }
+
+  // Optional validation for deviceUserId
+  if (deviceUserId !== undefined && isNaN(deviceUserId)) {
+    errors.push("deviceUserId must be a number if provided.");
+  }
+
   if (errors.length > 0) {
     return errors;
   } else {
     return [];
   }
 }
+
+const validateInventoryUpdateInput = (req, res, next) => {
+  const { deviceName, deviceTypeId } = req.body;
+  const errors = [];
+
+  if (!deviceName) {
+    errors.push("Device name is required.");
+  } else if (typeof deviceName !== "string" || isAllWhitespace(deviceName)) {
+    errors.push("Device name cannot be empty or whitespace.");
+  }
+
+  if (deviceTypeId === undefined || isNaN(deviceTypeId)) {
+    errors.push("Valid deviceTypeId is required.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      errors,
+      message: "Validation failed"
+    });
+  }
+
+  next();
+};
+
+const validateRetireInput = (req, res, next) => {
+  const { adminId, comment } = req.body;
+  const errors = [];
+
+  if (adminId === undefined || isNaN(adminId)) {
+    errors.push("Valid adminId is required.");
+  }
+
+  if (comment !== undefined && typeof comment !== "string") {
+    errors.push("Comment must be a string.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      errors,
+      message: "Validation failed",
+    });
+  }
+
+  next();
+};
 
 const validateDeviceTypeInput = (req) => {
   const { deviceTypeName } = req.body;
@@ -187,6 +244,8 @@ module.exports = {
   validateInventoryQueryParams,
   validateResourceId,
   validateInventoryInput,
+  validateInventoryUpdateInput,
+  validateRetireInput,
   validateDeviceTypeInput,
   validateRequestQueryParams,
   validateRequestInput,

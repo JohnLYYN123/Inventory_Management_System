@@ -53,17 +53,8 @@ router.post("/", async (req, res, next) => {
 });
 
 // PUT /api/inventory/:id
-router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
+router.put("/:id", middleware.validateResourceId, middleware.validateInventoryUpdateInput, async (req, res, next) => {
   try {
-    const errors = middleware.validateInventoryInput(req.body);
-    if (errors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        errors,
-        message: "Validation failed"
-      });
-    }
-
     const inventoryId = parseInt(req.params.id);
     const existingInventory = await db.getInventoryById(inventoryId);
 
@@ -78,18 +69,20 @@ router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
   }
 });
 
-// DELETE /api/inventory/:id
-router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
+// PUT /api/inventory/:id/retire
+router.put("/:id/retire", middleware.validateResourceId, middleware.validateRetireInput, async (req, res, next) => {
   try {
     const inventoryId = parseInt(req.params.id);
+    const { adminId, comment } = req.body;
+
     const existingInventory = await db.getInventoryById(inventoryId);
 
     if (!existingInventory) {
       return res.status(404).json(formatResponse(null, "Inventory not found"));
     }
 
-    await db.deleteInventory(inventoryId);
-    return res.status(204).end();
+    const retiredInventory = await db.retireInventory(inventoryId, parseInt(adminId), comment);
+    return res.status(200).json(formatResponse(retiredInventory, "Inventory retired successfully"));
   } catch (error) {
     next(error);
   }
