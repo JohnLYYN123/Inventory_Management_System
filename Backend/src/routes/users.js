@@ -128,10 +128,10 @@ router.post("/login", async (req, res, next) => {
 router.put("/:email/edit", jwtMiddleware.jwtTokenAuthentication ,async (req, res, next) => {
   try {
     const userEmail = req.params.email;
-    const { userName, email, password } = req.body;
+    const { userName, email } = req.body;
 
-    if (!userName || !email || !password) {
-      return res.status(400).json(formatResponse(null, "User name, email and role are required"));
+    if (!userName || !email) {
+      return res.status(400).json(formatResponse(null, "User name and email are required"));
     }
 
     const user = await db.getUserByEmail(userEmail);
