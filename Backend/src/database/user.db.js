@@ -173,6 +173,11 @@ module.exports = {
             return await prisma.user.update({
                 where: { email },
                 data: { password: hashed },
+                include: {
+                    requests: true,
+                    transactions: true,
+                    inventories: true,
+                },
             });
         } catch (error) {
             throw error;
