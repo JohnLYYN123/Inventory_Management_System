@@ -20,6 +20,17 @@ function isFloat(num) {
 
 // Validate query parameters for inventory
 const validateInventoryQueryParams = (req, res, next) => {
+  if (req.query.status) {
+    if (req.query.status !== "Available" && req.query.status !== "Pending" && req.query.status !== "Retried" && req.query.status !== "Unavailable") {
+      return res.status(400).json({ error: "Invalid status. Allowed values are 'Available', 'Pending', 'Retried', 'Unavailable'." });
+    }
+  }
+  if (req.query.deviceTypeId) {
+    req.query.deviceTypeId = parseInt(req.query.deviceTypeId);
+  }
+  if (req.query.deviceUserId) {
+    req.query.deviceUserId = parseInt(req.query.deviceUserId);
+  }
   next();
 };
 
@@ -46,12 +57,14 @@ const validateInventoryInput = (req) => {
 
   if (!status) {
     errors.push("Status is required.");
-  } else if (isAllWhitespace(status)) {
-    errors.push("Status cannot be empty or whitespace.");
+  } else if (status !== "Available" && status !== "Pending" && status !== "Retried" && status !== "Unavailable") {
+    errors.push("Invalid status. Allowed values are 'Available', 'Pending', 'Retried', 'Unavailable'.");
   }
 
   if (deviceTypeId === undefined || isNaN(deviceTypeId)) {
     errors.push("Valid deviceTypeId is required.");
+  } else {
+    req.body.deviceTypeId = parseInt(deviceTypeId);
   }
 
   // Optional validation for deviceUserId
