@@ -22,7 +22,7 @@ router.get("/", middleware.validateInventoryQueryParams,  jwtMiddleware.jwtToken
 });
 
 // GET /api/inventory/:id
-router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
+router.get("/:id", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
   try {
     const inventory = await db.getInventoryById(parseInt(req.params.id));
     if (!inventory) {
@@ -54,7 +54,7 @@ router.post("/", jwtMiddleware.jwtTokenAuthentication, async (req, res, next) =>
 });
 
 // PUT /api/inventory/:id
-router.put("/:id", middleware.validateResourceId, middleware.validateInventoryUpdateInput, async (req, res, next) => {
+router.put("/:id", middleware.validateResourceId, middleware.validateInventoryUpdateInput, jwtMiddleware.jwtTokenAuthentication ,async (req, res, next) => {
   try {
     const inventoryId = parseInt(req.params.id);
     const existingInventory = await db.getInventoryById(inventoryId);
@@ -71,7 +71,7 @@ router.put("/:id", middleware.validateResourceId, middleware.validateInventoryUp
 });
 
 // PUT /api/inventory/:id/retire
-router.put("/:id/retire", middleware.validateResourceId, middleware.validateRetireInput, async (req, res, next) => {
+router.put("/:id/retire", jwtMiddleware.jwtTokenAuthentication, middleware.validateResourceId, middleware.validateRetireInput, async (req, res, next) => {
   try {
     const inventoryId = parseInt(req.params.id);
     const { adminId, comment } = req.body;

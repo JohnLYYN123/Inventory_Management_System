@@ -12,7 +12,7 @@ const formatResponse = (data, message = "") => ({
 });
 
 // GET /api/devicetype 
-router.get("/", async (req, res, next) => {
+router.get("/", jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
         const deviceTypes = await db.getAllDeviceTypes(req.query);
         res.status(200).json(formatResponse(deviceTypes));
@@ -23,7 +23,7 @@ router.get("/", async (req, res, next) => {
 );
 
 // GET /api/devicetype/:id
-router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
+router.get("/:id", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication ,async (req, res, next) => {
     try {
         const deviceType = await db.getDeviceTypeById(parseInt(req.params.id));
         if (!deviceType) {
@@ -55,7 +55,7 @@ router.post("/", jwtMiddleware.jwtTokenAuthentication, async (req, res, next) =>
 });
 
 // PUT /api/devicetype/:id
-router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
+router.put("/:id", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication ,async (req, res, next) => {
     try {
         /*
         const errors = middleware.validateDeviceTypeInput(req.body);
@@ -79,7 +79,7 @@ router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
 });
 
 // DELETE /api/devicetype/:id
-router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
+router.delete("/:id", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
         const deletedDeviceType = await db.deleteDeviceType(parseInt(req.params.id));
         if (!deletedDeviceType) {
