@@ -59,12 +59,14 @@ function RequestManagement() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   const requestIdPrefix = "REQ_";
 
   // Filter requests based on selected mode.
-  const modeData = mode === "all" ? requests : requests.filter(item => item.status === mode);
+  const modeData = (mode === "all" ? requests : requests.filter(item => item.status === mode))
+  .slice()
+  .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime));
 
   // identity related data
   const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;

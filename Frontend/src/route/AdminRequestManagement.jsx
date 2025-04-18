@@ -95,7 +95,7 @@ function AdminRequestManagement() {
 
     // for pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
 
     const requestIdPrefix = 'REQ_'
 
@@ -128,13 +128,11 @@ function AdminRequestManagement() {
           };
         setCurrentPage(1); 
         fetchRequests();
-        console.log("hahahaha", requests);
       }, []);
 
-
-   
-
-    const modeData = mode === "all" ? requests : requests.filter(item=> item.status === mode);
+    const modeData = (mode === "all" ? requests : requests.filter(item=> item.status === mode))
+    .slice()
+    .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime));;
 
     // pagination calculations
     const total = Math.ceil((modeData?.length || 0) / itemsPerPage);
@@ -147,6 +145,8 @@ function AdminRequestManagement() {
     const handleApproveRequest =  async (request) => {
         // passing to API submission
         // check of passed info
+
+        console.log("request info toqub", request, uploadFile, adminComment);
         if (!uploadFile) {
             toast.error("Please upload a support file before approving");
             return;
@@ -156,13 +156,7 @@ function AdminRequestManagement() {
             toast.error("Please enter a comment before approving.");
             return;
         }
-
-        const formData = new FormData();
-        formData.append("requestId", request.id);
-        formData.append("supportFile", uploadFile);
-        formData.append("adminComment", adminComment);
-
-        console.log(formData);
+        
 
         try {
             // Simulate API call
@@ -170,6 +164,8 @@ function AdminRequestManagement() {
             //     method: "POST",
             //     body: formData,
             // });
+
+            
             
             const response = {
                 ok: true, // Simulate a successful response
@@ -180,7 +176,7 @@ function AdminRequestManagement() {
             }
 
             toast.success(`Request made by ${request.requestedBy} was approved`);
-            setRequestData(prev => prev.filter(req => req.id !== request.id));
+            // setRequestData(prev => prev.filter(req => req.id !== request.id));
             setUploadFile(null);
             setShowManagementDialog(false);
             setAdminComment("");
