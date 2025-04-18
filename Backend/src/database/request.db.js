@@ -169,7 +169,7 @@ module.exports = {
 
 
     // Approve request
-    approveRequest: async (id, adminComment) => {
+    approveRequest: async (id, req) => {
         try {
             // Check if the request exists and can be borrowed
             const request = await prisma.request.findUnique({
@@ -197,7 +197,7 @@ module.exports = {
                 where: { id: id },
                 data: {
                     status: "Completed",
-                    adminComment: adminComment,
+                    adminComment: req.adminComment,
                 },
                 include: {
                     device: true,

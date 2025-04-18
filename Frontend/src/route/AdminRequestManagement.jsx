@@ -157,23 +157,64 @@ function AdminRequestManagement() {
             return;
         }
         
+        const approveInfo ={
+            deviceId: request.deviceId,
+            requestorId: request.requestorId,
+            adminComment: adminComment
+        };
 
         try {
-            // Simulate API call
-            // const response = await fetch("https://api.example.com/approve-request", {
-            //     method: "POST",
-            //     body: formData,
-            // });
 
-            
-            
-            const response = {
-                ok: true, // Simulate a successful response
-            }
+            //TODO continue here
+            const response = await fetch(`http://localhost:3000/api/request/${request.id}/approve`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(approveInfo)
+                
+              });
 
             if (!response.ok) {
                 throw new Error("APi submission failed");
             }
+
+            const approveData = await response.json();
+            console.log("approvedata", approveData);
+
+            const transactionId = approveData.transaction.id;
+            
+            const formdata = new FormData();
+            formdata.append("file", uploadFile);
+            // begin uploading supporting image
+            const uploadResponse = await fetch(`http://localhost:3000/api/transaction/${approveInfo.deviceId}/${transactionId}/Borrow`, {
+                method: "POST",
+                headers:{
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formdata
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error("Support file transimision failed");
+            }
+
+            const updatedResponse = await fetch(`http://localhost:3000/api/request?status=Pending`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+        
+            console.log("response", updatedResponse);
+            if (!response.ok) {
+            throw new Error("Failed to fetch requests");
+            }
+            const data = await updatedResponse.json();
+            console.log("data", data);
+            setRequests(data.data);
 
             toast.success(`Request made by ${request.requestedBy} was approved`);
             // setRequestData(prev => prev.filter(req => req.id !== request.id));
