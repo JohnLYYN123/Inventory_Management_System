@@ -105,7 +105,7 @@ module.exports = {
             const existingRequest = await prisma.request.findUnique({
                 where: { id: id },
             });
-
+            console.log("existingRequest", existingRequest);
             if (!existingRequest) {
                 throw new Error("Request not found");
             }
@@ -160,7 +160,8 @@ module.exports = {
     // Delete request
     deleteRequest: async (id) => {
         try {
-            await prisma.request.delete({ where: { id } });
+            console.log("id", id);
+            return await prisma.request.delete({ where: { id: id } });
         } catch (error) {
             throw error;
         }

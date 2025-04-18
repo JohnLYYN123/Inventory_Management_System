@@ -21,6 +21,8 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 
+import { Textarea } from "@/components/ui/textarea";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/Label";
 
@@ -75,25 +77,102 @@ function RequestManagement() {
   const paginatedRequest = modeData.slice(startIndex, endIndex);
 
   const handleWithdraw = async (id) => {
-    setRequests(prev => prev.filter(req => req.id !== id));
+    console.log("Withdrawing request with ID:", id);
+    try{
+      const response = await fetch(`http://localhost:3000/api/request/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        toast.error("Failed to withdraw request");
+        throw new Error("Failed to withdraw request");
+      }
+
+      const data = await response.json();
+      console.log("Request withdrawn successfully:", data);
+      toast.success("Request withdrawn successfully!");
+
+      // fetch the updated requests list from the server
+      const updatedResponse = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!updatedResponse.ok) {
+        throw new Error("Failed to fetch updated requests");
+      }
+      const updatedData = await updatedResponse.json();
+      console.log("Updated requests data:", updatedData);
+
+      setRequests(updatedData.data);
+    } catch (error) {
+      console.error("Error withdrawing request:", error);
+    }
     setShowDialog(false);
   };
 
+
+  // handle save edit request
   const handleSaveEdit = async () => {
-    setRequests(prev =>
-      prev.map(req =>
-        req.id === curEditRequest.id ? curEditRequest : req
-      )
-    );
+    console.log("Saving edited request:", curEditRequest);
+    try{
+      const response = await fetch(`http://localhost:3000/api/request/${curEditRequest.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          requestDetail: curEditRequest.requestDetail,
+          deviceId: curEditRequest.device.id,
+          requestorId: userInfo.id
+        }),
+      });
+
+      if (!response.ok) {
+        toast.error("Failed to update request");
+        throw new Error("Failed to update request");
+      }
+
+      const data = await response.json();
+      console.log("Request updated successfully:", data);
+      toast.success("Request updated successfully!");
+
+      // fetch the updated requests list from the server
+      const updatedResponse = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!updatedResponse.ok) {
+        throw new Error("Failed to fetch updated requests");
+      }
+      const updatedData = await updatedResponse.json();
+      console.log("Updated requests data:", updatedData);
+
+      setRequests(updatedData.data);
+    } catch (error) {
+      console.error("Error saving edited request:", error);
+    }
     setShowDialog(false);
   };
 
   const addNewRequest = async () => {
     console.log("Adding new request:", newDevice, newRequestInfo, deviceId);
     const newRequest = {
-      requestorId: userInfo.id,
-      deviceId: deviceId,
-      info: newRequestInfo,
+      requestorId: parseInt(userInfo.id),
+      deviceId: parseInt(deviceId),
+      requestDetail: newRequestInfo,
     };
 
     try {
@@ -107,6 +186,7 @@ function RequestManagement() {
       });
 
       if (!response.ok) {
+        toast.error("Failed to create request");
         throw new Error("Failed to create request");
       }
 
@@ -114,7 +194,23 @@ function RequestManagement() {
       console.log("New request created:", data);
       toast.success("New request created successfully!");
 
-      setRequests([...requests, newRequest]);
+      // fetch the updated requests list from the server
+      const updatedResponse = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!updatedResponse.ok) {
+        throw new Error("Failed to fetch updated requests");
+      }
+      const updatedData = await updatedResponse.json();
+      console.log("Updated requests data:", updatedData);
+
+      setRequests(updatedData.data);
+
       setNewDevice("");
       setNewRequestInfo("");
     } catch (error) {
@@ -320,7 +416,7 @@ function RequestManagement() {
         </div>
       </div>
       <div className="flex gap-2 mb-4">
-        {["all", "pending", "completed", "denied"].map((f) => (
+        {["all", "Pending", "Completed", "Denied"].map((f) => (
           <button
             key={f}
             onClick={() => setMode(f)}
@@ -345,20 +441,21 @@ function RequestManagement() {
         <tbody>
           {paginatedRequest.map((req) => (
             <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
-              <td className="p-3">{requestIdPrefix + req.id}</td>
+              <td className="p-3">{req.id}</td>
               <td className="p-3">
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusIcon[req.status]}`}>
-                  {req.status}
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusIcon[req.status.toLowerCase()]}`}>
+                  {req.status.toLowerCase()}
                 </span>
               </td>
-              <td className="p-3">{req.date}</td>
-              <td className="p-3">{req.device}</td>
+              <td className="p-3">{req.requestTime}</td>
+              <td className="p-3">{req.device.deviceName}</td>
               <td className="p-3 flex items-center gap-2">
-                {req.status === "pending" && (
+                {req.status.toLowerCase() === "pending" && (
                   <Pencil
                     size={18}
                     className="text-blue-500 cursor-pointer"
                     onClick={() => {
+                      console.log("Edit request:", req);
                       setCurEditRequest(req);
                       setShowDialog(true);
                     }}
@@ -403,18 +500,19 @@ function RequestManagement() {
             </DialogHeader>
             <div className="space-y-3">
               <Label htmlFor="Device">Device</Label>
-              <Input
-                value={curEditRequest.device}
+              <Textarea
+                value={curEditRequest.device.deviceName}
                 onChange={(e) =>
                   setCurEditRequest({ ...curEditRequest, device: e.target.value })
                 }
+                readOnly
                 placeholder="Device"
               />
               <Label htmlFor="Info">Detailed Description of Request</Label>
               <Input
-                value={curEditRequest.info}
+                value={curEditRequest.requestDetail}
                 onChange={(e) =>
-                  setCurEditRequest({ ...curEditRequest, info: e.target.value })
+                  setCurEditRequest({ ...curEditRequest, requestDetail: e.target.value })
                 }
                 placeholder="Info"
               />
@@ -423,7 +521,7 @@ function RequestManagement() {
               <Button variant="ghost" onClick={() => setShowDialog(false)}>
                 Cancel
               </Button>
-              <Button variant="default" onClick={handleSaveEdit}>
+              <Button variant="default" onClick={() => handleSaveEdit()}>
                 Save
               </Button>
               <Button variant="destructive" onClick={() => handleWithdraw(curEditRequest.id)}>

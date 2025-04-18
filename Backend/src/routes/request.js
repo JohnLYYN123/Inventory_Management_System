@@ -38,9 +38,10 @@ router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
     }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
-        const errors = middleware.validateRequestInput(req);
+        const errors = middleware.validateRequestInput(req.body);
+        console.log("errors", errors);
         if (errors.length > 0) {
             return res.status(400).json({
                 success: false,
@@ -56,8 +57,9 @@ router.post("/", async (req, res, next) => {
     }
 });
 
-router .put("/:id", middleware.validateResourceId, async (req, res, next) => {
+router.put("/:id", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
+        console.log("body", req.body);
         const errors = middleware.validateRequestInput(req.body);
         if (errors.length > 0) {
             return res.status(400).json({
@@ -77,9 +79,11 @@ router .put("/:id", middleware.validateResourceId, async (req, res, next) => {
     }
 });
 
-router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
+router.delete("/:id", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
+        console.log("delete requests", req.params);
         const deletedRequest = await db.deleteRequest(parseInt(req.params.id));
+        console.log("deletedRequest", deletedRequest);
         if (!deletedRequest) {
             return res.status(404).json(formatResponse(null, "Request not found"));
         }
@@ -89,7 +93,7 @@ router.delete("/:id", middleware.validateResourceId, async (req, res, next) => {
     }
 });
 
-router.post("/:id/approve", middleware.validateResourceId, async (req, res, next) => {
+router.post("/:id/approve", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
         const requestId = parseInt(req.params.id);
         const request = await db.getRequestById(requestId);
@@ -104,7 +108,7 @@ router.post("/:id/approve", middleware.validateResourceId, async (req, res, next
     }
 });
 
-router.post("/:id/reject", middleware.validateResourceId, async (req, res, next) => {
+router.post("/:id/reject", middleware.validateResourceId, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
         const requestId = parseInt(req.params.id);
         const request = await db.getRequestById(requestId);

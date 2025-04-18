@@ -46,7 +46,7 @@ const Donut = ({ data }) => {
       };
     }, [data]);
   
-    return <div ref={chartRef} className="w-full h-96" />;
+    return <div ref={chartRef} className="w-full h-80" />;
   };
 
 export default Donut;
