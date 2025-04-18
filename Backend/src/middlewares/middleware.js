@@ -280,6 +280,39 @@ const validateReturnInput = (req, res, next) => {
   next();
 };
 
+const validateTransactionData = (req, res, next) => {
+  const { activity, deviceId, executorId } = req.body;
+  const errors = [];
+
+  if (!activity) {
+    errors.push("Activity is required.");
+  } else if (activity !== "Borrow" && activity !== "Return" && activity !== "Retired") {
+    errors.push("Invalid activity. Allowed values are 'Borrow', 'Return', 'Retired'.");
+  }
+
+  if (!deviceId) {
+    errors.push("Device ID is required.");
+  } else if (isNaN(deviceId)) {
+    errors.push("Device ID must be a number.");
+  }
+
+  if (!executorId) {
+    errors.push("Executor ID is required.");
+  } else if (isNaN(executorId)) {
+    errors.push("Executor ID must be a number.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      errors,
+      message: "TransactionData Validation failed",
+    });
+  }
+
+  next();
+}
+
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Internal Server Error" });
@@ -298,5 +331,6 @@ module.exports = {
   validateUserInput,
   validateTransactionFilters,
   validateReturnInput,
+  validateTransactionData,
   errorHandler
 };

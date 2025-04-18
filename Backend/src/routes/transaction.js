@@ -4,7 +4,7 @@ const db = require('../database');
 const s3 = require('../utils/doSpaces');
 const sharp = require('sharp')
 const { upload } = require('../middlewares/upload');
-const { validateResourceId, validateTransactionFilters, validateReturnInput } = require('../middlewares/middleware');
+const { validateResourceId, validateTransactionFilters, validateReturnInput, validateTransactionData } = require('../middlewares/middleware');
 
 const formatResponse = (data, message = "") => ({
     success: true,
@@ -95,5 +95,12 @@ router.put("/:id/return", validateResourceId, validateReturnInput, async (req, r
     }
 });
 
-
+router.post("/createTransaction", validateTransactionData, async (req, res, next) => {
+    try {        
+        const transaction = await db.createTransaction(deviceId, userId, activity, comment);
+        res.status(201).json(formatResponse(transaction, "Transaction created successfully"));
+    } catch (error) {
+        next(error);
+    }
+});
 module.exports = router;
