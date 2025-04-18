@@ -175,6 +175,7 @@ module.exports = {
 
 
     // Approve request
+    // the req here is right and working, please don't change it to adminComment
     approveRequest: async (id, req) => {
         try {
             // Check if the request exists and can be borrowed
@@ -256,6 +257,7 @@ module.exports = {
 
 
     // Reject request
+    // the parameters should be id and req, adminComment in previous versions is not right
     rejectRequest: async (id, req) => {
         try {
             // update request status and admin comment
