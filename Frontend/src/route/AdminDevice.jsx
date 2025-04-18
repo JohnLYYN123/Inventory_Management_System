@@ -85,19 +85,52 @@ function AdminDevice() {
     // For device return dialog
     const [returnDeviceDialog, setReturnDeviceDialog] = useState(false);
     const [returnDeviceInfo, setReturnDeviceInfo] = useState({});
+    
+    // for device types
+    const [deviceTypeList, setDeviceTypeList] = useState([]);
 
     // for pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    
-    const modeData = Array.isArray(inventoryDeviceList)
-      ? (mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item => item.status === mode.toLowerCase()))
-          .slice()
-          .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime))
-      : [];
+
+    const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;
+    const token = JSON.parse(localStorage.getItem("user")).data.token;
+    useEffect(() => {
+        // fetch device list
+        const fetchDevices = async () => {
+            try {
+                const response = await fetch(`http://localhost:3000/api/inventory`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                });
+        
+                console.log("response", response);
+                if (!response.ok) {
+                throw new Error("Failed to fetch requests");
+                }
+                const data = await response.json();
+                console.log("data", data);
+                setInventoryDeviceList(data.data);
+            }
+            catch (error) {
+                console.error("Error fetching requests:", error);
+            }
+            };
+        setCurrentPage(1); 
+        fetchDevices();
+      }, []);
+
+      const modeData = Array.isArray(inventoryDeviceList)
+        ? (mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item => item.status.toLowerCase() === mode.toLowerCase()))
+            .slice()
+            .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime))
+        : [];
 
     const filteredInventory = modeData?.filter((device) =>
-        device.name.toLowerCase().includes(searchedDevice.toLowerCase())
+        device?.deviceName?.toLowerCase().includes(searchedDevice.toLowerCase())
     );
 
     // pagination calculations
@@ -106,18 +139,6 @@ function AdminDevice() {
     const endIndex = startIndex + itemsPerPage;
     const paginatedInventory = filteredInventory.slice(startIndex, endIndex);
 
-    const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;
-    const token = JSON.parse(localStorage.getItem("user")).data.token;
-    useEffect(() => {
-        // fetch device list
-        try{
-
-        } catch (error) {
-            
-        }
-        setCurrentPage(1);
-      }, [mode, inventoryDeviceList]);
-      
 
     const handleAddingNewDevice = async () => {
         const newId = Number(inventoryDeviceList[inventoryDeviceList.length - 1].id) + 1;
@@ -171,7 +192,7 @@ function AdminDevice() {
                             </div>
                         </div>
                         <div className="flex gap-2 mb-4">
-                            {["all", "Available", "In-Use", "Pending" ,"Retired"].map((f) => (
+                            {["all", "Available", "Unavailable", "Pending" ,"Retired"].map((f) => (
                             <button
                                 key={f}
                                 onClick={() => setMode(f)}
@@ -269,16 +290,16 @@ function AdminDevice() {
                             {paginatedInventory.map((req) => (
                                 <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
                                     <td className="p-3">{req.id}</td>
-                                    <td className="p-3">{req.name}</td>
+                                    <td className="p-3">{req.deviceName}</td>
                                     <td className="p-3">{req.type}</td>
                                     <td className="p-3">
                                         <span
-                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${req.status === "available" ? "bg-green-100 text-green-800" : req.status === "in-use" ? "bg-yellow-100 text-yellow-800" : req.status === "pending" ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800"}`}
+                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${req.status === "Available" ? "bg-green-100 text-green-800" : req.status === "Unavailable" ? "bg-yellow-100 text-yellow-800" : req.status === "Pending" ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800"}`}
                                         >
                                             {req.status}
                                         </span>
                                     </td>
-                                    <td className="p-3">{req.assignedTo}</td>
+                                    <td className="p-3">{req.deviceUser?.userName ? `${req.deviceUser.userName} (${req.deviceUser.email})`: "-"}</td>
                                     <td className="p-3 flex items-center gap-2">
                                         <Pencil 
                                             size={18}
