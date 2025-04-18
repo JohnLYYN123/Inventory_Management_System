@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Pencil, X } from "lucide-react";
+import { toast } from "sonner";
 import { 
   Pagination, 
   PaginationContent, 
@@ -19,6 +20,8 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
+
+import { Textarea } from "@/components/ui/textarea";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/Label";
@@ -46,20 +49,28 @@ function RequestManagement() {
   const [curEditRequest, setCurEditRequest] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
   const [newRequestDialog, setNewRequestDialog] = useState(false);
+  const [availableDevices, setAvailableDevices] = useState([]);
 
   // New Request Dialog state
   const [newDevice, setNewDevice] = useState("");
+  const [deviceId, setDeviceId] = useState("");
   const [newRequestInfo, setNewRequestInfo] = useState("");
   // State to control the visibility of the device dropdown
   const [showDropdown, setShowDropdown] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   const requestIdPrefix = "REQ_";
 
   // Filter requests based on selected mode.
-  const modeData = mode === "all" ? requests : requests.filter(item => item.status === mode);
+  const modeData = (mode === "all" ? requests : requests.filter(item => item.status === mode))
+  .slice()
+  .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime));
+
+  // identity related data
+  const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;
+  const token = JSON.parse(localStorage.getItem("user")).data.token;
 
   // pagination calculations
   const total = Math.ceil(modeData.length / itemsPerPage);
@@ -68,36 +79,174 @@ function RequestManagement() {
   const paginatedRequest = modeData.slice(startIndex, endIndex);
 
   const handleWithdraw = async (id) => {
-    setRequests(prev => prev.filter(req => req.id !== id));
+    console.log("Withdrawing request with ID:", id);
+    try{
+      const response = await fetch(`http://localhost:3000/api/request/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        toast.error("Failed to withdraw request");
+        throw new Error("Failed to withdraw request");
+      }
+
+      const data = await response.json();
+      console.log("Request withdrawn successfully:", data);
+      toast.success("Request withdrawn successfully!");
+
+      // fetch the updated requests list from the server
+      const updatedResponse = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!updatedResponse.ok) {
+        throw new Error("Failed to fetch updated requests");
+      }
+      const updatedData = await updatedResponse.json();
+      console.log("Updated requests data:", updatedData);
+
+      setRequests(updatedData.data);
+    } catch (error) {
+      console.error("Error withdrawing request:", error);
+    }
     setShowDialog(false);
   };
 
+
+  // handle save edit request
   const handleSaveEdit = async () => {
-    setRequests(prev =>
-      prev.map(req =>
-        req.id === curEditRequest.id ? curEditRequest : req
-      )
-    );
+    console.log("Saving edited request:", curEditRequest);
+    try{
+      const response = await fetch(`http://localhost:3000/api/request/${curEditRequest.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          requestDetail: curEditRequest.requestDetail,
+          deviceId: curEditRequest.device.id,
+          requestorId: userInfo.id
+        }),
+      });
+
+      if (!response.ok) {
+        toast.error("Failed to update request");
+        throw new Error("Failed to update request");
+      }
+
+      const data = await response.json();
+      console.log("Request updated successfully:", data);
+      toast.success("Request updated successfully!");
+
+      // fetch the updated requests list from the server
+      const updatedResponse = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!updatedResponse.ok) {
+        throw new Error("Failed to fetch updated requests");
+      }
+      const updatedData = await updatedResponse.json();
+      console.log("Updated requests data:", updatedData);
+
+      setRequests(updatedData.data);
+    } catch (error) {
+      console.error("Error saving edited request:", error);
+    }
     setShowDialog(false);
   };
 
   const addNewRequest = async () => {
-    const newId = Math.max(...requests.map(r => r.id)) + 1;
+    console.log("Adding new request:", newDevice, newRequestInfo, deviceId);
     const newRequest = {
-      id: newId,
-      status: "pending",
-      date: new Date().toISOString().split("T")[0],
-      device: newDevice,
-      info: newRequestInfo,
+      requestorId: parseInt(userInfo.id),
+      deviceId: parseInt(deviceId),
+      requestDetail: newRequestInfo,
     };
-    setRequests([...requests, newRequest]);
-    setNewDevice("");
-    setNewRequestInfo("");
-  };
+
+    try {
+      const response = await fetch("http://localhost:3000/api/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newRequest),
+      });
+
+      if (!response.ok) {
+        toast.error("Failed to create request");
+        throw new Error("Failed to create request");
+      }
+
+      const data = await response.json();
+      console.log("New request created:", data);
+      toast.success("New request created successfully!");
+
+      // fetch the updated requests list from the server
+      const updatedResponse = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!updatedResponse.ok) {
+        throw new Error("Failed to fetch updated requests");
+      }
+      const updatedData = await updatedResponse.json();
+      console.log("Updated requests data:", updatedData);
+
+      setRequests(updatedData.data);
+
+      setNewDevice("");
+      setNewRequestInfo("");
+    } catch (error) {
+      console.error("Error creating new request:", error);
+    }
+  }
 
   useEffect(() => {
+    // fetch all requests from the server
+    const fetchRequests = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/request?requestorId=${userInfo.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log("response", response);
+        if (!response.ok) {
+          throw new Error("Failed to fetch requests");
+        }
+        const data = await response.json();
+        console.log("data", data);
+        setRequests(data.data);
+      }
+      catch (error) {
+        console.error("Error fetching requests:", error);
+      }
+    };
     setCurrentPage(1);
-  }, [mode, requests]);
+    fetchRequests();
+  }, []);
 
   // === Device Search Dropdown for New Request ===
 
@@ -112,32 +261,73 @@ function RequestManagement() {
     { id: 5, name: "Surface Laptop Studio" }
   ];
 
-  /* Production Version:
-  const [availableDevices, setAvailableDevices] = useState([]);
+  //Production Version:
   
+  
+  // useEffect(() => {
+  //   const fetchAvailableDevices = async () => {
+  //     try {
+  //       const response = await fetch(`http://localhost:3000/api/available-devices?search=${encodeURIComponent(newDevice)}`);
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch available devices");
+  //       }
+  //       const data = await response.json();
+  //       setAvailableDevices(data);
+  //     } catch (error) {
+  //       console.error("Error fetching available devices:", error);
+  //     }
+  //   };
+  //   if (newDevice) {
+  //     fetchAvailableDevices();
+  //     setShowDropdown(true);
+  //   }
+  // }, [newDevice]);
   useEffect(() => {
+    const controller = new AbortController();
+  
     const fetchAvailableDevices = async () => {
       try {
-        const response = await fetch(`http://localhost:4000/api/available-devices?search=${encodeURIComponent(newDevice)}`);
+        const response = await fetch(
+          `http://localhost:3000/api/inventory?deviceName=${encodeURIComponent(newDevice)}&status=Available`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch available devices");
         }
         const data = await response.json();
-        setAvailableDevices(data);
+        console.log("Available devices data:", data);
+        setAvailableDevices(data.data); // assuming backend returns { data: [...] }
       } catch (error) {
-        console.error("Error fetching available devices:", error);
+        if (error.name !== "AbortError") {
+          console.error("Error fetching available devices:", error);
+        }
       }
     };
+  
     if (newDevice) {
-      fetchAvailableDevices();
-      setShowDropdown(true);
+      const debounce = setTimeout(() => {
+        fetchAvailableDevices();
+        setShowDropdown(true);
+      }, 300);
+  
+      return () => {
+        clearTimeout(debounce);
+        controller.abort();
+      };
     }
   }, [newDevice]);
-  */
+  
+  
   
   // Using dummy data for now.
-  const filteredAvailableDevices = dummyAvailableDevices.filter(device =>
-    device.name.toLowerCase().includes(newDevice.toLowerCase())
+  const filteredAvailableDevices = availableDevices.filter(device =>
+    device.deviceName.toLowerCase().includes(newDevice.toLowerCase())
   );
 
   return (
@@ -184,12 +374,13 @@ function RequestManagement() {
                           <div
                             key={device.id}
                             onClick={() => {
-                              setNewDevice(device.name);
+                              setNewDevice(device.deviceName); // Set the selected device name in the input field.
+                              setDeviceId(device.id); // Set the selected device ID.
                               setShowDropdown(false); // Hide the dropdown upon selection.
                             }}
                             className="p-2 cursor-pointer hover:bg-gray-100"
                           >
-                            {device.name}
+                            {device.deviceName}
                           </div>
                         ))}
                       </div>
@@ -213,7 +404,7 @@ function RequestManagement() {
                   Cancel
                 </Button>
                 <Button
-                  variant="default"
+                  variant="buttonBlue"
                   onClick={() => {
                     addNewRequest();
                     setNewRequestDialog(false);
@@ -227,7 +418,7 @@ function RequestManagement() {
         </div>
       </div>
       <div className="flex gap-2 mb-4">
-        {["all", "pending", "completed", "denied"].map((f) => (
+        {["all", "Pending", "Completed", "Denied"].map((f) => (
           <button
             key={f}
             onClick={() => setMode(f)}
@@ -252,20 +443,21 @@ function RequestManagement() {
         <tbody>
           {paginatedRequest.map((req) => (
             <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
-              <td className="p-3">{requestIdPrefix + req.id}</td>
+              <td className="p-3">{req.id}</td>
               <td className="p-3">
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusIcon[req.status]}`}>
-                  {req.status}
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusIcon[req.status.toLowerCase()]}`}>
+                  {req.status.toLowerCase()}
                 </span>
               </td>
-              <td className="p-3">{req.date}</td>
-              <td className="p-3">{req.device}</td>
+              <td className="p-3">{req.requestTime}</td>
+              <td className="p-3">{req.device.deviceName}</td>
               <td className="p-3 flex items-center gap-2">
-                {req.status === "pending" && (
+                {req.status.toLowerCase() === "pending" && (
                   <Pencil
                     size={18}
                     className="text-blue-500 cursor-pointer"
                     onClick={() => {
+                      console.log("Edit request:", req);
                       setCurEditRequest(req);
                       setShowDialog(true);
                     }}
@@ -310,18 +502,19 @@ function RequestManagement() {
             </DialogHeader>
             <div className="space-y-3">
               <Label htmlFor="Device">Device</Label>
-              <Input
-                value={curEditRequest.device}
+              <Textarea
+                value={curEditRequest.device.deviceName}
                 onChange={(e) =>
                   setCurEditRequest({ ...curEditRequest, device: e.target.value })
                 }
+                readOnly
                 placeholder="Device"
               />
               <Label htmlFor="Info">Detailed Description of Request</Label>
               <Input
-                value={curEditRequest.info}
+                value={curEditRequest.requestDetail}
                 onChange={(e) =>
-                  setCurEditRequest({ ...curEditRequest, info: e.target.value })
+                  setCurEditRequest({ ...curEditRequest, requestDetail: e.target.value })
                 }
                 placeholder="Info"
               />
@@ -330,7 +523,7 @@ function RequestManagement() {
               <Button variant="ghost" onClick={() => setShowDialog(false)}>
                 Cancel
               </Button>
-              <Button variant="default" onClick={handleSaveEdit}>
+              <Button variant="default" onClick={() => handleSaveEdit()}>
                 Save
               </Button>
               <Button variant="destructive" onClick={() => handleWithdraw(curEditRequest.id)}>

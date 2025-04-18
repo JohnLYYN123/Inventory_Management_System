@@ -78,11 +78,9 @@ const mockData = [
   ];
 
 function AdminRequestManagement() {
-    const [showMyRequestList, setShowMyRequestList] = useState(false);
     const [requestData, setRequestData] = useState([]);
     const [mode, setMode] = useState("all");
     const [requests, setRequests] = useState(mockData);
-    const [page, setPage] = useState(1); // used for 
     const [curEditRequest, setCurEditRequest] = useState(null);
     const [showDialog, setShowDialog] = useState(false);
     const [newRequestDialog, setNewRequestDialog] = useState(false);
@@ -97,57 +95,58 @@ function AdminRequestManagement() {
 
     // for pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
 
     const requestIdPrefix = 'REQ_'
 
+     // identity related data
+     const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;
+     const token = JSON.parse(localStorage.getItem("user")).data.token;
+
     useEffect(() => {
+        const fetchRequests = async () => {
+            try {
+              const response = await fetch(`http://localhost:3000/api/request?Requeststatus=Pending`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+      
+              console.log("response", response);
+              if (!response.ok) {
+                throw new Error("Failed to fetch requests");
+              }
+              const data = await response.json();
+              console.log("data", data);
+              setRequests(data.data);
+            }
+            catch (error) {
+              console.error("Error fetching requests:", error);
+            }
+          };
         setCurrentPage(1); 
-        setRequestData(mockRequestData);
+        fetchRequests();
       }, []);
 
-    const modeData = mode === "all" ? requestData : requestData.filter(item=> item.status === mode);
+    const modeData = (mode === "all" ? requests : requests.filter(item=> item.status === mode))
+    .slice()
+    .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime));;
 
     // pagination calculations
-    const total = Math.ceil(modeData.length / itemsPerPage);
+    const total = Math.ceil((modeData?.length || 0) / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedRequest = modeData.slice(startIndex, endIndex);
 
-    
 
-    const handleWithdraw =  async (id) => {
-        setRequests(prev => prev.filter(req => req.id !== id));
-        setShowDialog(false);
-    };
-
-    const handleSaveEdit = async () => {
-    setRequests(prev =>
-        prev.map(req =>
-        req.id === curEditRequest.id ? curEditRequest : req
-        )
-    );
-    setShowDialog(false);
-    };
-
-    const addNewRequest = async () => {
-        const newId = Math.max(...requests.map(r => r.id)) + 1;
-        
-        const newRequest = {
-            id: newId, 
-            status: "pending",
-            date: new Date().toISOString().split("T")[0], 
-            device: newDevice, 
-            info: newRequestInfo
-        }
-        setRequests([...requests, newRequest]);
-        setNewDevice("");
-        setNewRequestInfo("");
-    };
 
     const handleApproveRequest =  async (request) => {
         // passing to API submission
         // check of passed info
+
+        console.log("request info toqub", request, uploadFile, adminComment);
         if (!uploadFile) {
             toast.error("Please upload a support file before approving");
             return;
@@ -157,13 +156,7 @@ function AdminRequestManagement() {
             toast.error("Please enter a comment before approving.");
             return;
         }
-
-        const formData = new FormData();
-        formData.append("requestId", request.id);
-        formData.append("supportFile", uploadFile);
-        formData.append("adminComment", adminComment);
-
-        console.log(formData);
+        
 
         try {
             // Simulate API call
@@ -171,6 +164,8 @@ function AdminRequestManagement() {
             //     method: "POST",
             //     body: formData,
             // });
+
+            
             
             const response = {
                 ok: true, // Simulate a successful response
@@ -181,7 +176,7 @@ function AdminRequestManagement() {
             }
 
             toast.success(`Request made by ${request.requestedBy} was approved`);
-            setRequestData(prev => prev.filter(req => req.id !== request.id));
+            // setRequestData(prev => prev.filter(req => req.id !== request.id));
             setUploadFile(null);
             setShowManagementDialog(false);
             setAdminComment("");
@@ -194,21 +189,57 @@ function AdminRequestManagement() {
       
     const handleDeclineRequest = async (request) => {
         // only admin is commentd
+        console.log("decline request", request);
         if(!adminComment) {
             toast.error("Please enter a reason before declining");
             return;
         }
+        const declineInfo = {
+            deviceId: request.deviceId,
+            requestorId: request.requestorId,
+            adminComment: adminComment
+        };
 
-        const formData = new FormData();
-        formData.append("requestId", request.id);
-        formData.append("supportFile", uploadFile);
-        formData.append("adminComment", adminComment);
+        try{ 
+            const response = await fetch(`http://localhost:3000/api/request/${request.id}/reject`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(declineInfo),
+            });
+    
+            if (!response.ok) {
+                toast.error("Failed to decline request");
+                throw new Error("Failed to decline request");
+            }
+
+            // fetch a new list of request again
+            const updatedResponse = await fetch(`http://localhost:3000/api/request?status=Pending`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                });
         
-        toast.error(`Request made by ${request.requestedBy} was declined`);
-        setRequestData(prev => prev.filter(req => req.id !== request.id));
-        setShowManagementDialog(false);
-        setUploadFile(null);
-        setAdminComment("");
+                console.log("response", updatedResponse);
+                if (!response.ok) {
+                throw new Error("Failed to fetch requests");
+                }
+                const data = await updatedResponse.json();
+                console.log("data", data);
+                setRequests(data.data);
+            } catch (error) {
+                console.error("Error declining request:", error);
+            }
+            
+            toast.error(`Request made by ${request.request} was declined`);
+            // setRequestData(prev => prev.filter(req => req.id !== request.id));
+            setShowManagementDialog(false);
+            setUploadFile(null);
+            setAdminComment("");
     };
 
     const isApproveDisabled = !uploadFile || !adminComment;
@@ -221,8 +252,7 @@ function AdminRequestManagement() {
                   </div>
               </div>
 
-              {!showMyRequestList ? 
-                (<div className="overflow x-auto">
+               <div className="overflow x-auto">
                     <table className="min-w-full table-auto boarder-collapse">
                         <thead>
                         <tr className="text-left text-sm font-semibold text-gray-700 border-b">
@@ -237,9 +267,9 @@ function AdminRequestManagement() {
                         {paginatedRequest && paginatedRequest.map((req) => (
                             <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
                                 <td className="p-3">{req.id}</td>
-                                <td className="p-3">{req.device}</td>
-                                <td className="p-3">{req.requestedBy}</td>
-                                <td className="p-3">{req.date}</td>
+                                <td className="p-3">{req.device.deviceName}</td>
+                                <td className="p-3">{req.requestor?.userName || "Unknown"}</td>
+                                <td className="p-3">{req.requestTime}</td>
                                 <td className="p-3 text-center">
                                     <div className="flex items-center justify-center gap-2">
                                         <Eye 
@@ -299,20 +329,20 @@ function AdminRequestManagement() {
                                 </div>
                                 <div>
                                 <Label className="text-md font-medium">Device:</Label>
-                                <div className="text-md">{viewedRequest.device}</div>
+                                <div className="text-md">{viewedRequest.device.deviceName}</div>
                                 </div>
                                 <div>
                                 <Label className="text-md font-medium">Requested By:</Label>
-                                <div className="text-md">{viewedRequest.requestedBy}</div>
+                                <div className="text-md">{viewedRequest.requestor.userName || "Unknown"}</div>
                                 </div>
                                 <div>
                                 <Label className="text-md font-medium">Date:</Label>
-                                <div className="text-md">{viewedRequest.date}</div>
+                                <div className="text-md">{viewedRequest.requestTime}</div>
                                 </div>
                                 <div>
                                 <Label className="text-md font-medium">Reason:</Label>
                                 <Textarea
-                                    value={viewedRequest.reason}
+                                    value={viewedRequest.requestDetail}
                                     readOnly 
                                     className="text-md"
                                 />
@@ -321,7 +351,7 @@ function AdminRequestManagement() {
                                     <Label className="text-md font-medium">Admin Upload Support Files:</Label>
                                     <Input 
                                         type="file"
-                                        accept="image/*,.pdf,.doc,.docx"
+                                        accept="image/*"
                                         onChange={(e) => setUploadFile(e.target.files[0])}
                                     />
                                     {uploadFile && (
@@ -358,115 +388,7 @@ function AdminRequestManagement() {
                             </DialogContent>
                         </Dialog>
                         )}
-                </div>) : (<div className="overflow-x-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-2xl font-bold mt-4">Request Management</h1>
-                        <div className="w-1/6">
-                            <Dialog open={newRequestDialog} onOpenChange={setNewRequestDialog}>
-                                <Button className="w-full" variant="buttonBlue" onClick={() => setNewRequestDialog(true)}>+ New Request</Button>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Create New Request</DialogTitle>
-                                        <DialogDescription>Fill in the request details below</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-3">
-                                        <Label htmlFor="device">Device</Label>
-                                        <Input value={newDevice} onChange={(e) => setNewDevice(e.target.value)} placeholder="Please enter device information" />
-                                        <Label htmlFor="info">Detailed Description</Label>
-                                        <Input value={newRequestInfo} onChange={(e) => setNewRequestInfo(e.target.value)} placeholder="Please enter your reason of request the device" />
-                                    </div>
-                                    <DialogFooter className="flex justify-end gap-2 mt-4">
-                                        <Button variant="ghost" onClick={() => setNewRequestDialog(false)}>Cancel</Button>
-                                        <Button variant="default" onClick={() => {addNewRequest(); setNewRequestDialog(false);}}>Add</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
-                    </div>
-                    <div className="flex gap-2 mb-4">
-                        {["all", "pending", "completed", "rejected"].map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setMode(f)}
-                            className={`px-4 py-1 rounded-md border ${
-                            mode === f ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
-                            }`}
-                        >
-                            {f.charAt(0).toUpperCase() + f.slice(1)}
-                        </button>
-                        ))}
-                    </div>
-                    <table className="min-w-full table-auto boarder-collapse">
-                        {/* table row heads */}
-                        <thead>
-                            <tr className="text-left text-sm font-semibold text-gray-700 border-b">
-                                <th className="p-3">Request ID</th>
-                                <th className="p-3">Status</th>
-                                <th className="p-3">Date</th>
-                                <th className="p-3">Device</th>
-                                <th className="p-3">Actions</th>
-                            </tr>
-                        </thead>
-                        {/* table stuffing */}
-                        <tbody>
-                            {modeData.map((req) => (
-                                <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
-                                    <td className="p-3">{requestIdPrefix + req.id}</td>
-                                    <td className="p-3">
-                                        <span
-                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${statusIcon[req.status]}`}
-                                        >
-                                            {req.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-3">{req.date}</td>
-                                    <td className="p-3">{req.device}</td>
-                                    <td className="p-3 flex items-center gap-2">
-                                        <Pencil 
-                                            size={18}
-                                            className="text-blue-500 cursor-pointer"
-                                            onClick={() => {
-                                                    setCurEditRequest(req);
-                                                    setShowDialog(true);
-                                                }   
-                                            }
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-        
-                    </table>
-                    {curEditRequest && (
-                        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                        <DialogContent>
-                            <DialogHeader>
-                            <DialogTitle>Edit / Withdraw Request</DialogTitle>
-                            <DialogDescription>Please be cautious the upcoming operations</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-3">
-                            <Label htmlFor="Device">Device</Label>
-                            <Input
-                                value={curEditRequest.device}
-                                onChange={(e) => setCurEditRequest({ ...curEditRequest, device: e.target.value })}
-                                placeholder="Device"
-                            />
-                            <Label htmlFor="Info">Detailed Description of Request</Label>
-                            <Input
-                                value={curEditRequest.info}
-                                onChange={(e) => setCurEditRequest({ ...curEditRequest, info: e.target.value })}
-                                placeholder="Info"
-                            />
-                            </div>
-                            <DialogFooter className="flex justify-end gap-2 mt-4">
-                            <Button variant="ghost" onClick={() => setShowDialog(false)}>Cancel</Button>
-                            <Button variant="default" onClick={handleSaveEdit}>Save</Button>
-                            <Button variant="destructive" onClick={() => handleWithdraw(curEditRequest.id)}>Withdraw</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                        </Dialog>
-                    )}
-                </div>)}
+                </div>
             </div>
             )
 }

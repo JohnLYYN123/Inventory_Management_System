@@ -4,7 +4,7 @@ const db = require('../database');
 const s3 = require('../utils/doSpaces');
 const sharp = require('sharp')
 const { upload } = require('../middlewares/upload');
-const { validateResourceId } = require('../middlewares/middleware');
+const { validateResourceId, validateTransactionFilters, validateReturnInput } = require('../middlewares/middleware');
 
 const formatResponse = (data, message = "") => ({
     success: true,

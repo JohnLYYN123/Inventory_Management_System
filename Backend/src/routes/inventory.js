@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 const middleware = require("../middlewares/middleware");
+const jwtMiddleware = require("../middlewares/jwtMiddleware");
 
 // Standard response format helper
 const formatResponse = (data, message = "") => ({
@@ -11,7 +12,7 @@ const formatResponse = (data, message = "") => ({
 });
 
 // GET /api/inventory
-router.get("/", middleware.validateInventoryQueryParams, async (req, res, next) => {
+router.get("/", middleware.validateInventoryQueryParams,  jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
   try {
     const inventories = await db.getAllInventories(req.query);
     res.status(200).json(formatResponse(inventories));
@@ -34,7 +35,7 @@ router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
 });
 
 // POST /api/inventory
-router.post("/", async (req, res, next) => {
+router.post("/", jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
   try {
     const errors = middleware.validateInventoryInput(req);
     if (errors.length > 0) {

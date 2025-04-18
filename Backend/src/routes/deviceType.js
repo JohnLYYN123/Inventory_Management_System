@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 const middleware = require("../middlewares/middleware");
+const jwtMiddleware = require("../middlewares/jwtMiddleware");
 
 // Standard response format helper
 const formatResponse = (data, message = "") => ({
@@ -35,7 +36,7 @@ router.get("/:id", middleware.validateResourceId, async (req, res, next) => {
 });
 
 // POST /api/devicetype
-router.post("/", async (req, res, next) => {
+router.post("/", jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
         const errors = middleware.validateDeviceTypeInput(req);
         if (errors.length > 0) {

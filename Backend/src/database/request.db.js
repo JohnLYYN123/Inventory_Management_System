@@ -67,7 +67,7 @@ module.exports = {
     getAllRequests: async (filters = {}) => {
         try {
             const { status, requestorId, deviceId } = filters;
-
+            console.log("status", status);
             const whereClause = {
                 status: status || undefined,
                 requestorId: requestorId || undefined,
@@ -105,7 +105,7 @@ module.exports = {
             const existingRequest = await prisma.request.findUnique({
                 where: { id: id },
             });
-
+            console.log("existingRequest", existingRequest);
             if (!existingRequest) {
                 throw new Error("Request not found");
             }
@@ -160,7 +160,8 @@ module.exports = {
     // Delete request
     deleteRequest: async (id) => {
         try {
-            await prisma.request.delete({ where: { id } });
+            console.log("id", id);
+            return await prisma.request.delete({ where: { id: id } });
         } catch (error) {
             throw error;
         }
@@ -229,14 +230,14 @@ module.exports = {
 
 
     // Reject request
-    rejectRequest: async (id, adminComment) => {
+    rejectRequest: async (id, req) => {
         try {
             // update request status and admin comment
             const rejectedRequest = await prisma.request.update({
                 where: { id: id },
                 data: {
                     status: "Denied",
-                    adminComment: adminComment,
+                    adminComment: req.adminComment,
                 },
                 include: {
                     device: true,
@@ -246,7 +247,7 @@ module.exports = {
 
             // update inventory status
             await prisma.inventory.update({
-                where: { id: request.deviceId },
+                where: { id: req.deviceId },
                 data: { status: "Available" },
             });
 

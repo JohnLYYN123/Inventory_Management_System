@@ -4,7 +4,8 @@ import AdminDevice from './AdminDevice';
 
 const MyDeviceRoutes = () => {
     const currentUser = JSON.parse(localStorage.getItem("user"));
-    if (currentUser && currentUser.role === "admin") {
+    const role = currentUser.data.identity.role;
+    if (currentUser && role.toLowerCase() === "admin") {
         return <AdminDevice />;
     }
     return <MyDevice />;
