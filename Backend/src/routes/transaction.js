@@ -4,7 +4,10 @@ const db = require('../database');
 const s3 = require('../utils/doSpaces');
 const sharp = require('sharp')
 const { upload } = require('../middlewares/upload');
+
 const { validateResourceId, validateTransactionFilters, validateReturnInput, validateTransactionData } = require('../middlewares/middleware');
+const jwtMiddleware = require("../middlewares/jwtMiddleware");
+
 
 const formatResponse = (data, message = "") => ({
     success: true,
@@ -13,7 +16,7 @@ const formatResponse = (data, message = "") => ({
 });
 
 // GET /api/transactions/:id
-router.get("/:id", validateResourceId, async (req, res, next) => {
+router.get("/:id", validateResourceId, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
         const transactionId = parseInt(req.params.id);
         const transaction = await db.getTransactionById(transactionId);
@@ -29,7 +32,7 @@ router.get("/:id", validateResourceId, async (req, res, next) => {
 });
 
 // GET /api/transactions/:id
-router.get("/", validateTransactionFilters, async (req, res, next) => {
+router.get("/", validateTransactionFilters, jwtMiddleware.jwtTokenAuthentication , async (req, res, next) => {
     try {
         const { activity, deviceId, executorId } = req.query;
 
@@ -49,7 +52,7 @@ router.get("/", validateTransactionFilters, async (req, res, next) => {
 
 
 // Handle file uploads
-router.post('/upload/:deviceId/:transactionId/:activity', upload.single('file'), async (req, res) => {
+router.post('/upload/:deviceId/:transactionId/:activity', jwtMiddleware.jwtTokenAuthentication, upload.single('file'), async (req, res) => {
     try {
         const { deviceId, transactionId, activity } = req.params;
         const buffer = req.file.buffer;
@@ -82,7 +85,7 @@ router.post('/upload/:deviceId/:transactionId/:activity', upload.single('file'),
 });
 
 //PUT /api/inventory/:id/return
-router.put("/:id/return", validateResourceId, validateReturnInput, async (req, res, next) => {
+router.put("/:id/return", validateResourceId, validateReturnInput, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
         const deviceId = parseInt(req.params.id);
         const { userId, comment } = req.body;

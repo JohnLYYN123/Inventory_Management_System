@@ -10,13 +10,6 @@ function isAllWhitespace(str) {
   return /^[\s]*$/.test(str);
   //return str.trim().length === 0;
 }
-function isNumber(str) {
-  return /^[+-]?\d+(\.\d+)?$/.test(str);
-}
-
-function isFloat(num) {
-  return Number(num) === num && !Number.isInteger(num);
-}
 
 // Validate query parameters for inventory
 const validateInventoryQueryParams = (req, res, next) => {
@@ -97,7 +90,7 @@ const validateInventoryUpdateInput = (req, res, next) => {
     return res.status(400).json({
       success: false,
       errors,
-      message: "Validation failed"
+      message: "Inventory Update Input Validation failed"
     });
   }
 
@@ -120,7 +113,7 @@ const validateRetireInput = (req, res, next) => {
     return res.status(400).json({
       success: false,
       errors,
-      message: "Validation failed",
+      message: "Retire Input Validation failed",
     });
   }
 
@@ -250,7 +243,7 @@ const validateTransactionFilters = (req, res, next) => {
     return res.status(400).json({
       success: false,
       errors,
-      message: "Invalid query parameters",
+      message: "Transaction filters validation failed",
     });
   }
 
@@ -273,7 +266,7 @@ const validateReturnInput = (req, res, next) => {
     return res.status(400).json({
       success: false,
       errors,
-      message: "Validation failed",
+      message: "Transaction return input Validation failed",
     });
   }
 
@@ -306,7 +299,7 @@ const validateTransactionData = (req, res, next) => {
     return res.status(400).json({
       success: false,
       errors,
-      message: "TransactionData Validation failed",
+      message: "Transaction Data Validation failed",
     });
   }
 
