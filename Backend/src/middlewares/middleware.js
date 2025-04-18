@@ -159,7 +159,8 @@ const validateRequestQueryParams = (req, res, next) => {
 };
 
 const validateRequestInput = (req) => {
-  const { requestorId, deviceId } = req.body;
+  console.log("in middleware", req);
+  const { requestorId, deviceId } = req;
   const errors = [];
 
   if (requestorId && !isNaN(requestorId)) {
