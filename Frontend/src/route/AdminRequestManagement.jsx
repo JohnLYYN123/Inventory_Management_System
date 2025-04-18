@@ -130,9 +130,11 @@ function AdminRequestManagement() {
         fetchRequests();
       }, []);
 
-    const modeData = (mode === "all" ? requests : requests.filter(item=> item.status === mode))
-    .slice()
-    .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime));;
+      const modeData = Array.isArray(requests)
+      ? (mode === "all" ? requests : requests.filter(item => item.status === mode))
+          .slice()
+          .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime))
+      : [];
 
     // pagination calculations
     const total = Math.ceil((modeData?.length || 0) / itemsPerPage);
@@ -182,25 +184,30 @@ function AdminRequestManagement() {
 
             const approveData = await response.json();
             console.log("approvedata", approveData);
-
-            const transactionId = approveData.transaction.id;
-            
-            const formdata = new FormData();
-            formdata.append("file", uploadFile);
-            // begin uploading supporting image
-            const uploadResponse = await fetch(`http://localhost:3000/api/transaction/${approveInfo.deviceId}/${transactionId}/Borrow`, {
-                method: "POST",
-                headers:{
-                    Authorization: `Bearer ${token}`,
-                },
-                body: formdata
-            });
-
-            if (!uploadResponse.ok) {
-                throw new Error("Support file transimision failed");
+            if(!approveData.transaction){
+                toast.error("The requested device was already borrowed, DENIED automatically");
             }
+            else{
+                const transactionId = approveData.transaction.id;
+            
+                const formdata = new FormData();
+                formdata.append("file", uploadFile);
+                // begin uploading supporting image
+                const uploadResponse = await fetch(`http://localhost:3000/api/transaction/${approveInfo.deviceId}/${transactionId}/Borrow`, {
+                    method: "POST",
+                    headers:{
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: formdata
+                });
 
-            const updatedResponse = await fetch(`http://localhost:3000/api/request?status=Pending`, {
+                console.log("uploadResponse", updatedResponse);
+
+                if (!uploadResponse.ok) {
+                    throw new Error("Support file transimision failed");
+                }
+            }
+            const updatedResponse = await fetch(`http://localhost:3000/api/request?Requeststatus=Pending`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -216,7 +223,7 @@ function AdminRequestManagement() {
             console.log("data", data);
             setRequests(data.data);
 
-            toast.success(`Request made by ${request.requestedBy} was approved`);
+            toast.success(`Request made by ${request.requestor.userName} was approved`);
             // setRequestData(prev => prev.filter(req => req.id !== request.id));
             setUploadFile(null);
             setShowManagementDialog(false);
@@ -224,6 +231,9 @@ function AdminRequestManagement() {
         } catch (error) {
             console.error("Error when doing submission:", error);
             toast.error("Error when doing submission. Please try again.");
+            setUploadFile(null);
+            setShowManagementDialog(false);
+            setAdminComment("");
         }
 
       };
@@ -257,7 +267,7 @@ function AdminRequestManagement() {
             }
 
             // fetch a new list of request again
-            const updatedResponse = await fetch(`http://localhost:3000/api/request?status=Pending`, {
+            const updatedResponse = await fetch(`http://localhost:3000/api/request?Requeststatus=Pending`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -276,7 +286,7 @@ function AdminRequestManagement() {
                 console.error("Error declining request:", error);
             }
             
-            toast.error(`Request made by ${request.request} was declined`);
+            toast.error(`Request made by ${request.requestor.userName} was declined`);
             // setRequestData(prev => prev.filter(req => req.id !== request.id));
             setShowManagementDialog(false);
             setUploadFile(null);

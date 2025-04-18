@@ -186,6 +186,8 @@ module.exports = {
                 },
             });
 
+            console.log("check request",request, req);
+
             if (!request) {
                 throw new Error("Request not found");
             }
@@ -194,9 +196,25 @@ module.exports = {
                 throw new Error("Only pending requests can be approved.");
             }
 
-            if (request.device.status !== "Available") {
-                throw new Error("Device is not available for borrowing.");
+            if (request.device.deviceUserId !== null){
+                const autoDenyRequest = await prisma.request.update({
+                    where: { id: id },
+                    data: {
+                        status: "Denied",
+                        adminComment: "Device has been borrowed, thus automatically denied",
+                    },
+                    include: {
+                        device: true,
+                        requestor: true,
+                    },
+                });
+                
+                return { autoDenyRequest, transaction: false};
             }
+
+            // if (request.device.status !== "Available") {
+            //     throw new Error("Device is not available for borrowing.");
+            // }
 
             // Updata request status and admin comment
             const approvedRequest = await prisma.request.update({
