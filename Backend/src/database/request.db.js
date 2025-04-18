@@ -67,7 +67,7 @@ module.exports = {
     getAllRequests: async (filters = {}) => {
         try {
             const { status, requestorId, deviceId } = filters;
-
+            console.log("status", status);
             const whereClause = {
                 status: status || undefined,
                 requestorId: requestorId || undefined,
@@ -206,14 +206,14 @@ module.exports = {
 
 
     // Reject request
-    rejectRequest: async (id, adminComment) => {
+    rejectRequest: async (id, req) => {
         try {
             // update request status and admin comment
             const rejectedRequest = await prisma.request.update({
                 where: { id: id },
                 data: {
                     status: "Denied",
-                    adminComment: adminComment,
+                    adminComment: req.adminComment,
                 },
                 include: {
                     device: true,
@@ -223,7 +223,7 @@ module.exports = {
 
             // update inventory status
             await prisma.inventory.update({
-                where: { id: request.deviceId },
+                where: { id: req.deviceId },
                 data: { status: "Available" },
             });
 

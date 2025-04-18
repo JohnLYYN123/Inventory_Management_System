@@ -13,11 +13,15 @@ const formatResponse = (data, message = "") => ({
 
 router.get("/", middleware.validateRequestQueryParams, jwtMiddleware.jwtTokenAuthentication, async (req, res, next) => {
     try {
+        console.log("req", req.query);
         if (req.query.requestorId) {
             req.query.requestorId = parseInt(req.query.requestorId);
         }
         if (req.query.deviceId) {
             req.query.deviceId = parseInt(req.query.deviceId);
+        }
+        if(req.query.Requeststatus){
+            req.query.status = req.query.Requeststatus;
         }
         const requests = await db.getAllRequests(req.query);
         res.status(200).json(formatResponse(requests));
