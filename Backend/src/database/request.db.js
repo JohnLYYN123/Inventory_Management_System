@@ -254,14 +254,14 @@ module.exports = {
 
 
     // Reject request
-    rejectRequest: async (id, req) => {
+    rejectRequest: async (id, adminComment) => {
         try {
             // update request status and admin comment
             const rejectedRequest = await prisma.request.update({
                 where: { id: id },
                 data: {
                     status: "Denied",
-                    adminComment: req.adminComment,
+                    adminComment: adminComment,
                 },
                 include: {
                     device: true,
@@ -271,7 +271,7 @@ module.exports = {
 
             // update inventory status
             await prisma.inventory.update({
-                where: { id: req.deviceId },
+                where: { id: rejectedRequest.deviceId },
                 data: { status: "Available" },
             });
 
