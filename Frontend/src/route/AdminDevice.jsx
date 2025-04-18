@@ -32,8 +32,9 @@ import {
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea} from "@/components/ui/textarea";
 
-import { Pencil, ArchiveRestore, Trash2 } from "lucide-react";
+import { Pencil, ArchiveRestore } from "lucide-react";
 
 const mockDeviceInventory = [
     { id: "1", name: "MacBook Pro M3", type: "Laptop", status: "in-use", assignedTo: "james.wilson@company.com" },
@@ -58,20 +59,10 @@ const deviceDistribution = [
 ];
 
 function AdminDevice() {
-    // for the toggle switch ops
-    const [showMyDeviceList, setShowMyDeviceList] = useState(false);
-
-    // for my device list
-    const [myDeviceList, setMyDeviceList] = useState(mockDevice);
-    const [distribution, setDistribution] = useState(deviceDistribution);
     const [searchedDevice, setSearchedDevice] = useState("");
 
-    const filteredDeviceList = myDeviceList.filter((device) => 
-        device.name.toLowerCase().includes(searchedDevice.toLowerCase())
-    );
-
     // for inventorys devices
-    const [inventoryDeviceList, setInventoryDeviceList] = useState(mockDeviceInventory);
+    const [inventoryDeviceList, setInventoryDeviceList] = useState("");
     const [newInventoryDevice, setNewInventoryDevice] = useState("");
     const [mode, setMode] = useState("all");
 
@@ -85,16 +76,27 @@ function AdminDevice() {
         assignedTo: ""
     });
 
+    // For edit device info
     const [editDeviceDialog, setEditDeviceDialog] = useState(false);
-    const [editDeviceInfo, setEditDeviceInfo] = useState(null);
+    const [editDeviceInfo, setEditDeviceInfo] = useState({});
+    const [uploadFile, setUploadFile] = useState(null);
+    const [adminComment, setAdminComment] = useState("");
+
+    // For device return dialog
+    const [returnDeviceDialog, setReturnDeviceDialog] = useState(false);
+    const [returnDeviceInfo, setReturnDeviceInfo] = useState({});
 
     // for pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 2;
+    const itemsPerPage = 10;
     
-    const modeData = mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item=> item.status === mode.toLowerCase());
+    const modeData = Array.isArray(inventoryDeviceList)
+      ? (mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item => item.status === mode.toLowerCase()))
+          .slice()
+          .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime))
+      : [];
 
-    const filteredInventory = modeData.filter((device) =>
+    const filteredInventory = modeData?.filter((device) =>
         device.name.toLowerCase().includes(searchedDevice.toLowerCase())
     );
 
@@ -103,6 +105,18 @@ function AdminDevice() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedInventory = filteredInventory.slice(startIndex, endIndex);
+
+    const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;
+    const token = JSON.parse(localStorage.getItem("user")).data.token;
+    useEffect(() => {
+        // fetch device list
+        try{
+
+        } catch (error) {
+            
+        }
+        setCurrentPage(1);
+      }, [mode, inventoryDeviceList]);
       
 
     const handleAddingNewDevice = async () => {
@@ -126,7 +140,7 @@ function AdminDevice() {
         setShowNewDeviceDialog(false);
     }
 
-    const handleEditDevice = async () => {
+    const handleReturnDevice = async () => {
         setInventoryDeviceList(prev => 
             prev.map(req => 
                 req.id === editDeviceInfo.id ? editDeviceInfo : req
@@ -135,47 +149,11 @@ function AdminDevice() {
         setEditDeviceDialog(false);
     }
 
-    useEffect(() => {
-        setCurrentPage(1);
-      }, [mode, inventoryDeviceList]);
+    
 
 
     return (
         <div className="px-10 py-3">
-
-            {/** toggle display switchs */}
-            {showMyDeviceList ? (
-                <div>
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold mt-4">My Devices</h2>
-                        <Input 
-                            placeholder="Search devices..." 
-                            className="w-80" 
-                            type="text"
-                            value={searchedDevice}
-                            onChange={(e) => setSearchedDevice(e.target.value)}
-                            />
-                    </div>
-
-                    {/* Device card */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                        {filteredDeviceList.map((device, idx) => 
-                            <Card key={idx}>
-                                <CardContent className="p-4">
-                                <h2 className="text-md font-semibold">{device.name}</h2>
-                                <p className="text-sm text-muted-foreground">{device.type}</p>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    Borrowed since: {device.borrowed}
-                                </p>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
-                    <h2 className="text-2xl font-bold mb-4">Device Distribution</h2>
-                    <Donut data={distribution} />
-
-                </div>
-            ) : (
                 <div>
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-4xl font-bold mt-4">Inventory Device List</h1>
@@ -311,6 +289,18 @@ function AdminDevice() {
                                                 }   
                                             }
                                         />
+
+                                        {/* On for those devices that are in in-use mode */}
+                                        {req.status === "in-use" && (
+                                            <ArchiveRestore 
+                                                size={18}
+                                                className="text-green-500 cursor-pointer"
+                                                onClick={() => {
+                                                    setReturnDeviceDialog(true);
+                                                    setReturnDeviceInfo({...req});
+                                                }}
+                                            />
+                                        )}
                                     </td>   
 
                                 </tr>
@@ -394,8 +384,54 @@ function AdminDevice() {
                         </DialogContent>
                         </Dialog>
                     )}
+                    {returnDeviceDialog && (
+                        <Dialog open={returnDeviceDialog} onOpenChange={setReturnDeviceDialog}>
+                        <DialogContent>
+                            <DialogHeader>
+                            <DialogTitle>Returning Device</DialogTitle>
+                            <DialogDescription>You are about to return a device, please proceed with caution</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-3">
+                                <Label htmlFor="deviceName">Device Name: </Label>
+                                <div className="text-md font-sm">{returnDeviceInfo.name}</div>
+
+                                <Label htmlFor="deviceType">Device Type: </Label>
+                                <div className="text-md font-sm">{returnDeviceInfo.type}</div>
+
+                                <Label htmlFor="deviceStatus">Device Status: </Label>
+                                <div className="text-md font-sm text-red-500">Changing to Available</div>
+                                <div>
+                                    <Label className="text-md font-medium">Admin Upload Support Files:</Label>
+                                    <Input 
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setUploadFile(e.target.files[0])}
+                                    />
+                                    {uploadFile && (
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Selected: <strong>{uploadFile.name}</strong>
+                                        </p>
+                                    )}
+                                </div>
+                                <div>
+                                    <Label className="text-md font-medium">Admin Comment:</Label>
+                                    <Textarea
+                                        placeholder="Please enter your comment here" 
+                                        onChange={(e) => setAdminComment(e.target.value)}
+                                        value={adminComment}
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter className="flex justify-end gap-2 mt-4">
+                            <Button variant="ghost" onClick={() => setReturnDeviceDialog(false)}>Cancel</Button>
+                            <Button variant="buttonBlue" onClick={() => {handleReturnDevice();}}>
+                                Save
+                            </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
-            )}
         </div>
 
     );
