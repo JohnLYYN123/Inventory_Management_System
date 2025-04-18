@@ -201,7 +201,6 @@ function AdminRequestManagement() {
                     body: formdata
                 });
                 toast.success("SUCESS!!!");
-                console.log("uploadResponse", updatedResponse);
 
                 if (!uploadResponse.ok) {
                     throw new Error("Support file transimision failed");
@@ -215,7 +214,6 @@ function AdminRequestManagement() {
                 },
             });
         
-            console.log("response", updatedResponse);
             if (!response.ok) {
                 throw new Error("Failed to fetch requests");
             }
@@ -224,13 +222,14 @@ function AdminRequestManagement() {
             setRequests(data.data);
 
             toast.success(`Request made by ${request.requestor.userName} was approved`);
-            // setRequestData(prev => prev.filter(req => req.id !== request.id));
+            
             setUploadFile(null);
             setShowManagementDialog(false);
             setAdminComment("");
         } catch (error) {
             console.error("Error when doing submission:", error);
             toast.error("Error when doing submission. Please try again.");
+            setRequests(prev => prev.filter(req => req.id !== request.id));
             setUploadFile(null);
             setShowManagementDialog(false);
             setAdminComment("");
@@ -284,13 +283,14 @@ function AdminRequestManagement() {
                 setRequests(data.data);
             } catch (error) {
                 console.error("Error declining request:", error);
+                setShowManagementDialog(false);
+                setUploadFile(null);
+                setAdminComment("");
             }
             
             toast.error(`Request made by ${request.requestor.userName} was declined`);
             // setRequestData(prev => prev.filter(req => req.id !== request.id));
-            setShowManagementDialog(false);
-            setUploadFile(null);
-            setAdminComment("");
+            
     };
 
     const isApproveDisabled = !uploadFile || !adminComment;
