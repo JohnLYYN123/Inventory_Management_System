@@ -170,6 +170,27 @@ module.exports = {
     // Approve request
     approveRequest: async (id, adminComment) => {
         try {
+            // Check if the request exists and can be borrowed
+            const request = await prisma.request.findUnique({
+                where: { id },
+                include: {
+                    device: true,
+                    requestor: true,
+                },
+            });
+
+            if (!request) {
+                throw new Error("Request not found");
+            }
+
+            if (request.status !== "Pending") {
+                throw new Error("Only pending requests can be approved.");
+            }
+
+            if (request.device.status !== "Available") {
+                throw new Error("Device is not available for borrowing.");
+            }
+
             // Updata request status and admin comment
             const approvedRequest = await prisma.request.update({
                 where: { id: id },
@@ -185,19 +206,22 @@ module.exports = {
 
             // updata device status
             await prisma.inventory.update({
-                where: { id: request.deviceId },
-                data: { status: "Unavailable" },
+                where: { id: approvedRequest.deviceId },
+                data: {
+                    status: "Unavailable",
+                    deviceUserId: approvedRequest.requestorId,
+                },
             });
 
             // create new transaction
-            await prisma.transaction.create({
+            const transaction = await prisma.transaction.create({
                 data: {
-                    deviceId: request.deviceId,
-                    executorId: request.requestorId,
+                    deviceId: approvedRequest.deviceId,
+                    executorId: approvedRequest.requestorId,
                     activity: "Borrow",
                 },
             });
-            return approvedRequest;
+            return { approvedRequest, transaction };
         } catch (error) {
             throw error;
         }
