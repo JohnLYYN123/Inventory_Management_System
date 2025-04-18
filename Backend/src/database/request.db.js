@@ -166,7 +166,21 @@ module.exports = {
     // Delete request
     deleteRequest: async (id) => {
         try {
-            console.log("id", id);
+            // Check if the request exists
+            const existingRequest = await prisma.request.findUnique({
+                where: { id: id },
+            });
+            console.log("Request to be deleted", existingRequest);
+
+            if (!existingRequest) {
+                throw new Error("Request not found");
+            }
+
+            await prisma.inventory.update({
+                where: { id: existingRequest.deviceId },
+                data: { status: "Available" },
+            });
+
             return await prisma.request.delete({ where: { id: id } });
         } catch (error) {
             throw error;
