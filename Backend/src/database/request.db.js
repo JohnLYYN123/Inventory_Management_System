@@ -196,7 +196,9 @@ module.exports = {
                 throw new Error("Only pending requests can be approved.");
             }
 
-            if (request.device.deviceUserId !== null){
+            console.log("ajajah e", request.device.deviceUserId);
+
+            if (request.device.deviceUserId){
                 const autoDenyRequest = await prisma.request.update({
                     where: { id: id },
                     data: {

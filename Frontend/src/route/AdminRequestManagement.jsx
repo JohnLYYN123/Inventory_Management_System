@@ -184,23 +184,23 @@ function AdminRequestManagement() {
 
             const approveData = await response.json();
             console.log("approvedata", approveData);
-            if(!approveData.transaction){
+            if(approveData.transaction === false){
                 toast.error("The requested device was already borrowed, DENIED automatically");
             }
             else{
-                const transactionId = approveData.transaction.id;
-            
+                const transactionId = approveData.data.transaction.id;
                 const formdata = new FormData();
                 formdata.append("file", uploadFile);
                 // begin uploading supporting image
-                const uploadResponse = await fetch(`http://localhost:3000/api/transaction/${approveInfo.deviceId}/${transactionId}/Borrow`, {
+                toast.success("uploading photos ... ");
+                const uploadResponse = await fetch(`http://localhost:3000/api/transaction/upload/${approveInfo.deviceId}/${transactionId}/Borrow`, {
                     method: "POST",
                     headers:{
                         Authorization: `Bearer ${token}`,
                     },
                     body: formdata
                 });
-
+                toast.success("SUCESS!!!");
                 console.log("uploadResponse", updatedResponse);
 
                 if (!uploadResponse.ok) {
@@ -217,7 +217,7 @@ function AdminRequestManagement() {
         
             console.log("response", updatedResponse);
             if (!response.ok) {
-            throw new Error("Failed to fetch requests");
+                throw new Error("Failed to fetch requests");
             }
             const data = await updatedResponse.json();
             console.log("data", data);

@@ -80,7 +80,7 @@ router.post('/upload/:deviceId/:transactionId/:activity', jwtMiddleware.jwtToken
 
         return res.status(200).json(formatResponse(updatedTransaction, "Upload successful"));
     } catch (error) {
-        next(error);
+        console.error(error);
     }
 });
 
