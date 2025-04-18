@@ -36,6 +36,12 @@ module.exports = {
                 },
             });
 
+            // updata device status
+            await prisma.inventory.update({
+                where: { id: request.deviceId },
+                data: { status: "Pending" },
+            });
+
             return request;
         } catch (error) {
             throw error;
