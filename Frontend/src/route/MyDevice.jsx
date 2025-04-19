@@ -26,7 +26,7 @@ function MyDevice() {
       try {
         const token = parsed.data?.token || parsed.token;
         const response = await fetch(
-          `http://localhost:4000/api/inventory?deviceUserId=${user.id}`,
+          `http://localhost:3000/api/inventory?deviceUserId=${user.id}`,
           {
             headers: {
               "Content-Type": "application/json",
