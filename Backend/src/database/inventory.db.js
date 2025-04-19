@@ -104,6 +104,10 @@ module.exports = {
                 throw new Error("Inventory not found");
             }
 
+            let deviceStatus = existingInventory.status;
+            if(deviceStatus !== inventoryData.status){
+                deviceStatus = inventoryData.status;
+            }
             // Check if the new device type exist
             const deviceType = await prisma.deviceType.findUnique({
                 where: { id: inventoryData.deviceTypeId },
@@ -112,13 +116,14 @@ module.exports = {
             if (!deviceType) {
                 throw new Error("DeviceType not found");
             }
-
+            
             // Perform update
             const updated = await prisma.inventory.update({
                 where: { id: id },
                 data: {
                     deviceName: inventoryData.deviceName,
                     deviceTypeId: inventoryData.deviceTypeId,
+                    status: deviceStatus
                 },
                 include: {
                     deviceType: true,
@@ -146,7 +151,7 @@ module.exports = {
             const inventory = await prisma.inventory.findUnique({
                 where: { id: deviceId },
                 include: {
-                    request: true,
+                    requests: true,
                 },
             });
 
@@ -173,7 +178,7 @@ module.exports = {
             );
 
             // Create a retirement transaction
-            await prisma.transactions.create({
+            const transactionInfo = await prisma.transaction.create({
                 data: {
                     deviceId: deviceId,
                     executorId: adminId,
@@ -191,7 +196,7 @@ module.exports = {
             const retiredInventory = await prisma.inventory.update({
                 where: { id: deviceId },
                 data: {
-                    status: "Retried",
+                    status: "Retired",
                     deviceUserId: null,
                 },
                 include: {
@@ -201,7 +206,7 @@ module.exports = {
                 },
             });
 
-            return retiredInventory;
+            return {retiredInventory, transaction: transactionInfo};
         } catch (error) {
             throw error;
         }

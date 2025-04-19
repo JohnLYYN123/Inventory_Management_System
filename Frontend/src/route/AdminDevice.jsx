@@ -35,6 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea} from "@/components/ui/textarea";
 
 import { Pencil, ArchiveRestore } from "lucide-react";
+import { toast } from "sonner";
 
 const mockDeviceInventory = [
     { id: "1", name: "MacBook Pro M3", type: "Laptop", status: "in-use", assignedTo: "james.wilson@company.com" },
@@ -84,10 +85,12 @@ function AdminDevice() {
 
     // For device return dialog
     const [returnDeviceDialog, setReturnDeviceDialog] = useState(false);
-    const [returnDeviceInfo, setReturnDeviceInfo] = useState({});
+    const [returnDeviceInfo, setReturnDeviceInfo] = useState([]);
     
     // for device types
     const [deviceTypeList, setDeviceTypeList] = useState([]);
+    const [deviceTypeMap, setDeviceTypeMap] = useState({});
+    
 
     // for pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -96,37 +99,74 @@ function AdminDevice() {
     const userInfo = JSON.parse(localStorage.getItem("user")).data.identity;
     const token = JSON.parse(localStorage.getItem("user")).data.token;
     useEffect(() => {
-        // fetch device list
-        const fetchDevices = async () => {
-            try {
-                const response = await fetch(`http://localhost:3000/api/inventory`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
+        //fetch device types
+        const fetchDeviceTypes = async () => {
+            try{
+                const response = await fetch(`http://localhost:3000/api/devicetype`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
         
                 console.log("response", response);
                 if (!response.ok) {
-                throw new Error("Failed to fetch requests");
+                    throw new Error("Failed to fetch device types");
+                }
+                const data = await response.json();
+                console.log("device Type data", data);
+                setDeviceTypeList(data.data);
+
+                // converting device types list to a map 
+
+                const deviceTypeMapObj = {};
+                for (let i = 0; i < data.data.length; i++) {
+                    const item = await data.data[i];
+                    deviceTypeMapObj[item.id] = item.deviceTypeName;
+                }
+                console.log("device Type map", deviceTypeMapObj);
+                
+
+                setDeviceTypeMap(deviceTypeMapObj);
+                console.log("map object", deviceTypeMap);
+            } catch (error) {
+                console.error("Error fetching device device Types", error);
+            }
+        };
+
+        // fetch device list
+        const fetchDevices = async () => {
+            try {
+                const response = await fetch(`http://localhost:3000/api/inventory`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+        
+                console.log("response", response);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch requests");
                 }
                 const data = await response.json();
                 console.log("data", data);
                 setInventoryDeviceList(data.data);
             }
             catch (error) {
-                console.error("Error fetching requests:", error);
+                console.error("Error fetching devices:", error);
             }
-            };
+        };
         setCurrentPage(1); 
+        fetchDeviceTypes();
         fetchDevices();
       }, []);
 
       const modeData = Array.isArray(inventoryDeviceList)
         ? (mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item => item.status.toLowerCase() === mode.toLowerCase()))
             .slice()
-            .sort((a, b) => new Date(b.requestTime) - new Date(a.requestTime))
+            .sort((a, b) => Number(a.id) - Number(b.id))
         : [];
 
     const filteredInventory = modeData?.filter((device) =>
@@ -161,6 +201,77 @@ function AdminDevice() {
         setShowNewDeviceDialog(false);
     }
 
+    const handleEditDevice = async () => {
+        // edit the device
+        console.log("editDeviceInfo", editDeviceInfo);
+        try{
+            if(editDeviceInfo.status === "Retired"){
+                const retireInfo = {
+                    adminId: userInfo.id, 
+                    comment: "Retiring inventory device"
+                };
+                const response = await fetch(`http://localhost:3000/api/inventory/${editDeviceInfo.id}/retire`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(retireInfo)
+                });
+
+                if(!response.ok){
+                    toast.error("Failed to retire device");
+                    throw new Error("Failed to retire a device");
+                }
+
+                const data = await response.json();
+                console.log("handleEditdevice", data);
+                toast.apply("Successfully RETIRED a device");
+            }
+            else{
+                const updateInfo = {
+                    deviceName: editDeviceInfo.deviceName,
+                    deviceTypeId: editDeviceInfo.deviceTypeId,
+                    status: editDeviceInfo.status
+                };
+                const response = await fetch(`http://localhost:3000/api/inventory/${editDeviceInfo.id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(updateInfo)
+                });
+
+                if(!response.ok){
+                    toast.error("Failed to update device");
+                    throw new Error("Failed to update a device");
+                }
+            }
+
+            // get all inventories 
+            const inventoryResponse = await fetch(`http://localhost:3000/api/inventory`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!inventoryResponse.ok) {
+                throw new Error("Failed to fetch requests");
+            }
+            const data = await inventoryResponse.json();
+            console.log("data", data);
+            setInventoryDeviceList(data.data);
+        } catch (error) {
+            console.error(error);
+        }
+        setEditDeviceInfo("");
+        setEditDeviceDialog(false);
+    }
+    
+
     const handleReturnDevice = async () => {
         setInventoryDeviceList(prev => 
             prev.map(req => 
@@ -169,9 +280,6 @@ function AdminDevice() {
         );
         setEditDeviceDialog(false);
     }
-
-    
-
 
     return (
         <div className="px-10 py-3">
@@ -246,8 +354,6 @@ function AdminDevice() {
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="available">Available</SelectItem>
-                                                    <SelectItem value="in-use">In Use</SelectItem>
-                                                    <SelectItem value="pending">Pending</SelectItem>
                                                     <SelectItem value="retired">Retired</SelectItem>
                                                 </SelectContent>
                                             </Select>
@@ -291,7 +397,7 @@ function AdminDevice() {
                                 <tr key={req.id} className="text-sm border-b hover:bg-gray-50">
                                     <td className="p-3">{req.id}</td>
                                     <td className="p-3">{req.deviceName}</td>
-                                    <td className="p-3">{req.type}</td>
+                                    <td className="p-3">{deviceTypeMap[req.deviceTypeId]}</td>
                                     <td className="p-3">
                                         <span
                                             className={`px-2 py-1 rounded-full text-xs font-semibold ${req.status === "Available" ? "bg-green-100 text-green-800" : req.status === "Unavailable" ? "bg-yellow-100 text-yellow-800" : req.status === "Pending" ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800"}`}
@@ -305,14 +411,14 @@ function AdminDevice() {
                                             size={18}
                                             className="text-blue-500 cursor-pointer"
                                             onClick={() => {
-                                                setEditDeviceInfo({...req});
+                                                setEditDeviceInfo(req);
                                                 setEditDeviceDialog(true);
                                                 }   
                                             }
                                         />
 
                                         {/* On for those devices that are in in-use mode */}
-                                        {req.status === "in-use" && (
+                                        {req.status === "Unavailable" && (
                                             <ArchiveRestore 
                                                 size={18}
                                                 className="text-green-500 cursor-pointer"
@@ -362,43 +468,37 @@ function AdminDevice() {
                             </DialogHeader>
                             <div className="space-y-3">
                                 <Label htmlFor="deviceName">Device Name: </Label>
-                                <div className="text-md font-sm">{editDeviceInfo.name}</div>
+                                <div className="text-md font-sm">{editDeviceInfo.deviceName}</div>
 
                                 <Label htmlFor="deviceType">Device Type: </Label>
-                                <div className="text-md font-sm">{editDeviceInfo.type}</div>
+                                <div className="text-md font-sm">{deviceTypeMap[editDeviceInfo.deviceTypeId]}</div>
 
                                 <Label htmlFor="deviceStatus">Device Status: </Label>
-                                <Select value={editDeviceInfo.status} onValueChange={(value) => 
-                                        setEditDeviceInfo(prev => ({...prev,
+                                <div className="text-sm font-md text-red-500">Options for Unavailable and Pending are disabled, view Requests Management for more details</div>
+                                <Select
+                                    value={editDeviceInfo.status}
+                                    onValueChange={(value) => {
+                                        setEditDeviceInfo(prev => ({
+                                        ...prev,
                                         status: value,
-                                        assignedTo: value === "in-use" ? prev.assignedTo : ""
-                                    }))}>
+                                        }))
+                                    }}
+                                    disabled={["Unavailable"].includes(editDeviceInfo.status)}
+                                    >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select a device status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="available">Available</SelectItem>
-                                        <SelectItem value="in-use">In Use</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="retired">Retired</SelectItem>
+                                        <SelectItem value="Available">Available</SelectItem>
+                                        <SelectItem value="Unavailable" disabled>Unavailable</SelectItem>
+                                        <SelectItem value="Retired">Retired</SelectItem>
+                                        <SelectItem value="Pending" disabled>Pending</SelectItem>
                                     </SelectContent>
                                 </Select>
-
-                                <Label htmlFor="assignedTo">Assigned To: </Label>
-                                <Input
-                                    value={editDeviceInfo.assignedTo}
-                                    onChange={(e) => setEditDeviceInfo({ ...editDeviceInfo, assignedTo: e.target.value })}
-                                    placeholder={
-                                        (editDeviceInfo.status === "in-use" || editDeviceInfo.status=="pending") ?
-                                        "Please enter the email of the person assigned to this device" :
-                                        "Assigned to feature is DISABLED for the current device status"
-                                    }
-                                    disabled={(editDeviceInfo.status !== "in-use" || editDeviceInfo.status !== "pending")}
-                                />
                             </div>
                             <DialogFooter className="flex justify-end gap-2 mt-4">
                             <Button variant="ghost" onClick={() => setEditDeviceDialog(false)}>Cancel</Button>
-                            <Button variant="buttonBlue" onClick={() => {handleEditDevice();}}>
+                            <Button variant="buttonBlue" onClick={() => {handleEditDevice();}} disabled={["Unavailable", "Pending"].includes(editDeviceInfo.status)}>
                                 Save
                             </Button>
                             </DialogFooter>
