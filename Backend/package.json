@@ -1,0 +1,30 @@
+{
+  "name": "ims-backend",
+  "version": "0.1.0",
+  "description": "The Backend of IMS",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --forceExit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.6.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.1483.0",
+    "jest": "^29.7.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.6.0",
+    "sharp": "^0.33.3",
+    "supertest": "^7.0.0"
+  }
+}

@@ -1,0 +1,7 @@
+.env
+.env.example
+node_modules/
+prisma/migrations
+test/
+package-lock.json
+package.json
