@@ -143,7 +143,7 @@ function Profile() {
         <User className="w-10 h-10 text-muted-foreground" />
         <div>
           <h2 className="text-xl font-semibold">{profile.displayName || profile.userName}</h2>
-          <p className="text-sm text-gray-500">{profile.title}</p>
+          <p className="text-sm text-gray-500">{profile.role}</p>
         </div>
       </div>
 
