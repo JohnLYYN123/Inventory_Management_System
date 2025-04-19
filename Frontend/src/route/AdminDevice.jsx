@@ -70,12 +70,11 @@ function AdminDevice() {
     // for new inventory device dialog
     const [showNewDeviceDialog, setShowNewDeviceDialog] = useState(false);
     const [newDeviceInfo, setNewDeviceInfo] = useState({
-        id: "",
-        name:"", 
-        type: "",
-        status: "available", 
-        assignedTo: ""
+        deviceName:"", 
+        deviceType: "",
+        status: "Available", 
     });
+    const [newDeviceType, setNewDeviceType] = useState("");
 
     // For edit device info
     const [editDeviceDialog, setEditDeviceDialog] = useState(false);
@@ -90,6 +89,7 @@ function AdminDevice() {
     // for device types
     const [deviceTypeList, setDeviceTypeList] = useState([]);
     const [deviceTypeMap, setDeviceTypeMap] = useState({});
+    const [deviceTypeMap2, setDeviceTypeMap2] = useState({});
     
 
     // for pagination
@@ -121,14 +121,17 @@ function AdminDevice() {
                 // converting device types list to a map 
 
                 const deviceTypeMapObj = {};
+                const deviceTypeMapObj2 = {};
                 for (let i = 0; i < data.data.length; i++) {
                     const item = await data.data[i];
                     deviceTypeMapObj[item.id] = item.deviceTypeName;
+                    deviceTypeMapObj2[item.deviceTypeName] = item.id;
                 }
                 console.log("device Type map", deviceTypeMapObj);
                 
 
                 setDeviceTypeMap(deviceTypeMapObj);
+                setDeviceTypeMap2(deviceTypeMapObj2);
                 console.log("map object", deviceTypeMap);
             } catch (error) {
                 console.error("Error fetching device device Types", error);
@@ -166,7 +169,7 @@ function AdminDevice() {
       const modeData = Array.isArray(inventoryDeviceList)
         ? (mode === "all" ? inventoryDeviceList : inventoryDeviceList.filter(item => item.status.toLowerCase() === mode.toLowerCase()))
             .slice()
-            .sort((a, b) => Number(a.id) - Number(b.id))
+            .sort((a, b) => Number(b.id) - Number(a.id))
         : [];
 
     const filteredInventory = modeData?.filter((device) =>
@@ -179,24 +182,96 @@ function AdminDevice() {
     const endIndex = startIndex + itemsPerPage;
     const paginatedInventory = filteredInventory.slice(startIndex, endIndex);
 
+    const isReturnDisabled = !uploadFile || !adminComment;
+    const isAddDeviceDisabled = !newDeviceInfo.deviceName || !newDeviceInfo.deviceType || !newDeviceInfo.status;
+
+
+    const getDeviceTypes = async () => {
+        try{
+            const response = await fetch(`http://localhost:3000/api/devicetype`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+    
+            console.log("response", response);
+            if (!response.ok) {
+                throw new Error("Failed to fetch device types");
+            }
+            const data = await response.json();
+            console.log("device Type data", data);
+            setDeviceTypeList(data.data);
+
+            // converting device types list to a map 
+
+            const deviceTypeMapObj = {};
+            const deviceTypeMapObj2 = {};
+            for (let i = 0; i < data.data.length; i++) {
+                const item = await data.data[i];
+                deviceTypeMapObj[item.id] = item.deviceTypeName;
+                deviceTypeMapObj2[item.deviceTypeName] = item.id;
+            }
+            console.log("device Type map", deviceTypeMapObj);
+            
+
+            setDeviceTypeMap(deviceTypeMapObj);
+            setDeviceTypeMap2(deviceTypeMapObj2);
+
+            console.log("map object", deviceTypeMap);
+        } catch (error) {
+            console.error("Error fetching device device Types", error);
+        }
+    };
 
     const handleAddingNewDevice = async () => {
-        const newId = Number(inventoryDeviceList[inventoryDeviceList.length - 1].id) + 1;
-        setNewDeviceInfo({ ...newDeviceInfo, device_id: newId });
-        const device = {
-            id: String(newId), 
-            name: newDeviceInfo.name,
-            type: newDeviceInfo.type,
-            status: newDeviceInfo.status,
-            assignedTo: newDeviceInfo.assignedTo,
-          };
+        const deviceInfo = {
+            deviceName: newDeviceInfo.deviceName,
+            status: "Available",
+            deviceType: newDeviceInfo.deviceType, 
+            deviceTypeId: deviceTypeMap2[newDeviceInfo.deviceType]   
+        }
         
-        setInventoryDeviceList(prev => [...prev, device]);
+        try{
+            const response = await fetch(`http://localhost:3000/api/inventory`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(deviceInfo)
+            });
+            
+            if (!response.ok || response.status !== 201) {
+                throw new Error("Failed to fetch device types");
+            }
+
+            const inventoryResponse = await fetch(`http://localhost:3000/api/inventory`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!inventoryResponse.ok) {
+                throw new Error("Failed to fetch requests");
+            }
+            const data = await inventoryResponse.json();
+
+            
+            toast.success("Successfully added a new device");
+            setInventoryDeviceList(data.data);
+
+        }catch (error){
+            console.error(error);
+            toast.error("add new device failed");
+        }
         setNewDeviceInfo({
-            name:"", 
-            type: "",
-            status: "available", 
-            assignedTo: ""
+            deviceName:"", 
+            deviceType: "",
+            status: "Available",
         });
         setShowNewDeviceDialog(false);
     }
@@ -226,7 +301,7 @@ function AdminDevice() {
 
                 const data = await response.json();
                 console.log("handleEditdevice", data);
-                toast.apply("Successfully RETIRED a device");
+                toast.success("Successfully RETIRED a device");
             }
             else{
                 const updateInfo = {
@@ -263,6 +338,7 @@ function AdminDevice() {
             }
             const data = await inventoryResponse.json();
             console.log("data", data);
+            toast.success("Successfully updated a device");
             setInventoryDeviceList(data.data);
         } catch (error) {
             console.error(error);
@@ -273,12 +349,77 @@ function AdminDevice() {
     
 
     const handleReturnDevice = async () => {
-        setInventoryDeviceList(prev => 
-            prev.map(req => 
-                req.id === editDeviceInfo.id ? editDeviceInfo : req
-            )
-        );
-        setEditDeviceDialog(false);
+        const returnInfo = {
+            deviceId: returnDeviceInfo.id,
+            userId: userInfo.id, 
+            comment: adminComment
+        };
+        try {
+            const response = await fetch(`http://localhost:3000/api/transaction/${returnDeviceInfo.id}/return`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(returnInfo)
+            });
+
+            if(!response.ok){
+                toast.error("Failed to update device");
+                throw new Error("Failed to update a device");
+            }
+
+            const transaction = await response.json();
+            console.log("transaction", transaction);
+            const transactionId = transaction.data.id;
+            const formdata = new FormData();
+            formdata.append("file", uploadFile);
+            // begin uploading supporting image
+            toast.success("uploading photos ... ");
+            const uploadResponse = await fetch(`http://localhost:3000/api/transaction/upload/${transaction.data.deviceId}/${transactionId}/Return`, {
+                method: "POST",
+                headers:{
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formdata
+            });
+            toast.success("SUCCESS!!!");
+
+            if (!uploadResponse.ok) {
+                throw new Error("Support file transimision failed");
+            }
+
+            if(uploadResponse.status === 400){
+                toast.error("Image must be at least 800x600 resolution");
+            }
+            else if(uploadResponse.status === 200){
+                toast.success("Image has been uploaded successfully");
+            }
+            else{
+                throw new Error("Image trannsmission failed");
+            }
+
+            const inventoryResponse = await fetch(`http://localhost:3000/api/inventory`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!inventoryResponse.ok) {
+                throw new Error("Failed to fetch requests");
+            }
+            const data = await inventoryResponse.json();
+            toast.success("Successfully returned a device");
+            setInventoryDeviceList(data.data);
+        } catch (error) {
+            console.error(error);
+            toast.error("Error happened during returning the current device");
+        }
+        setAdminComment("");
+        setUploadFile(null);
+        setReturnDeviceDialog(false);
     }
 
     return (
@@ -314,7 +455,7 @@ function AdminDevice() {
                         </div>
                         <div className="w-1/6 h-10 justify-end mb-4">
                                 <Dialog open={showNewDeviceDialog} onOpenChange={setShowNewDeviceDialog}>
-                                    <Button variant="buttonBlue" className="w-full" onClick={() => setShowNewDeviceDialog(true)}> 
+                                    <Button variant="buttonBlue" className="w-full" onClick={() => {getDeviceTypes(); setShowNewDeviceDialog(true);}}> 
                                         + New Device
                                     </Button>
                                     <DialogContent>
@@ -326,52 +467,51 @@ function AdminDevice() {
                                             <Label htmlFor="deviceName">Device Name</Label>
                                             <Input 
                                                 id="deviceName"
-                                                value={newDeviceInfo.name}
-                                                onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, name: e.target.value })}
+                                                value={newDeviceInfo.deviceName}
+                                                onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, deviceName: e.target.value })}
                                                 placeholder="Please enter device name"
                                             />
                                         </div>
 
                                         <div className="space-y-3 mt-4">
                                             <Label htmlFor="deviceType">Device Type</Label>
-                                            <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, type: value })}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select a device type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="laptop">Laptop</SelectItem>
-                                                    <SelectItem value="mobile">Mobile</SelectItem>
-                                                    <SelectItem value="tablet">Tablet</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <div className="flex items-center gap-2">
+                                                <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, deviceType: value })}>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select a device type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {deviceTypeList.map((type) => (
+                                                            <SelectItem key={type.id} value={type.deviceTypeName}>
+                                                            {type.deviceTypeName}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Button variant="" className="whitespace-nowrap" onClick={() => alert("TODO: Add new type dialog")}>
+                                                    + Add Device Type
+                                                </Button>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-3 mt-4">
                                             <Label htmlFor="deviceStatus">Device Status</Label>
-                                            <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, status: value })}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select a device status" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="available">Available</SelectItem>
-                                                    <SelectItem value="retired">Retired</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="space-y-3 mt-4">
-                                            <Label htmlFor="assignedTo">Assigned To</Label>
-                                            <Input 
-                                                id="assignedTo"
-                                                value={newDeviceInfo.assignedTo}
-                                                onChange={(e) => setNewDeviceInfo({ ...newDeviceInfo, assignedTo: e.target.value })}
-                                                placeholder="Please enter the email of the person assigned to this device"
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <Select onValueChange={(value) => setNewDeviceInfo({ ...newDeviceInfo, status: value })}>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select a device status" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="available">Available</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                
+                                            </div>
                                         </div>
 
                                         <DialogFooter className="flex justify-end gap-2 mt-4">
                                             <Button variant="ghost" onClick={() => setShowNewDeviceDialog(false)}>Cancel</Button>
-                                            <Button variant="buttonBlue" onClick={() => {handleAddingNewDevice();}}>
+                                            <Button variant="buttonBlue" onClick={() => {handleAddingNewDevice();}} disabled={isAddDeviceDisabled}>
                                                 Add
                                             </Button>
                                         </DialogFooter>   
@@ -510,17 +650,18 @@ function AdminDevice() {
                         <DialogContent>
                             <DialogHeader>
                             <DialogTitle>Returning Device</DialogTitle>
-                            <DialogDescription>You are about to return a device, please proceed with caution</DialogDescription>
+                            <DialogDescription className="text-red-500">You are about to return a device, please proceed with caution</DialogDescription>
                             </DialogHeader>
                             <div className="space-y-3">
                                 <Label htmlFor="deviceName">Device Name: </Label>
-                                <div className="text-md font-sm">{returnDeviceInfo.name}</div>
+                                <div className="text-md font-sm">{returnDeviceInfo.deviceName}</div>
 
                                 <Label htmlFor="deviceType">Device Type: </Label>
-                                <div className="text-md font-sm">{returnDeviceInfo.type}</div>
+                                <div className="text-md font-sm">{deviceTypeMap[returnDeviceInfo.deviceTypeId]}</div>
 
                                 <Label htmlFor="deviceStatus">Device Status: </Label>
-                                <div className="text-md font-sm text-red-500">Changing to Available</div>
+                                <div className="text-md font-sm">{returnDeviceInfo.status} <div className="text-md font-sm text-red-500">(Changing to Available)</div></div>
+                                
                                 <div>
                                     <Label className="text-md font-medium">Admin Upload Support Files:</Label>
                                     <Input 
@@ -544,8 +685,8 @@ function AdminDevice() {
                                 </div>
                             </div>
                             <DialogFooter className="flex justify-end gap-2 mt-4">
-                            <Button variant="ghost" onClick={() => setReturnDeviceDialog(false)}>Cancel</Button>
-                            <Button variant="buttonBlue" onClick={() => {handleReturnDevice();}}>
+                            <Button variant="ghost" onClick={() => {setReturnDeviceDialog(false); setAdminComment(""); setUploadFile(null);}}>Cancel</Button>
+                            <Button variant="buttonBlue" onClick={() => {handleReturnDevice();}} disabled={isReturnDisabled}>
                                 Save
                             </Button>
                             </DialogFooter>

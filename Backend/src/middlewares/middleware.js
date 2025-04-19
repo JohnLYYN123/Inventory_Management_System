@@ -50,7 +50,7 @@ const validateInventoryInput = (req) => {
 
   if (!status) {
     errors.push("Status is required.");
-  } else if (status !== "Available" && status !== "Pending" && status !== "Retried" && status !== "Unavailable") {
+  } else if (status !== "Available" && status !== "Pending" && status !== "Retired" && status !== "Unavailable") {
     errors.push("Invalid status. Allowed values are 'Available', 'Pending', 'Retried', 'Unavailable'.");
   }
 
