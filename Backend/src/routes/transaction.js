@@ -99,8 +99,11 @@ router.put("/:id/return", validateResourceId, validateReturnInput, jwtMiddleware
 });
 
 router.post("/createTransaction", validateTransactionData, async (req, res, next) => {
-    try {        
-        const transaction = await db.createTransaction(deviceId, userId, activity, comment);
+    try {
+        const transaction = await db.createTransaction(req.body);
+        if (!transaction) {
+            return res.status(400).json(formatResponse(null, "Transaction creation failed"));
+        }
         res.status(201).json(formatResponse(transaction, "Transaction created successfully"));
     } catch (error) {
         next(error);
