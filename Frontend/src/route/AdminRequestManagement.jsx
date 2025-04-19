@@ -200,10 +200,21 @@ function AdminRequestManagement() {
                     },
                     body: formdata
                 });
-                toast.success("SUCESS!!!");
 
                 if (!uploadResponse.ok) {
-                    throw new Error("Support file transimision failed");
+                    if(uploadResponse.status === 400){
+                        toast.error("Image must be at least 250 x 250 resolution");
+                    }
+                    else{
+                        throw new Error("Support file transimision failed");
+                    }
+                }
+                else if(uploadResponse.status === 200){
+                    toast.success("Image has been uploaded successfully");
+                    toast.success("Successfully returned a device");
+                }
+                else{
+                    throw new Error("Image trannsmission failed");
                 }
             }
             const updatedResponse = await fetch(`http://localhost:3000/api/request?Requeststatus=Pending`, {
@@ -290,6 +301,9 @@ function AdminRequestManagement() {
             
             toast.error(`Request made by ${request.requestor.userName} was declined`);
             // setRequestData(prev => prev.filter(req => req.id !== request.id));
+            setShowManagementDialog(false);
+            setUploadFile(null);
+            setAdminComment("");
             
     };
 

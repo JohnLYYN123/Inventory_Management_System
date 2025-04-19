@@ -58,8 +58,8 @@ router.post('/upload/:deviceId/:transactionId/:activity', jwtMiddleware.jwtToken
         const buffer = req.file.buffer;
 
         const metadata = await sharp(buffer).metadata();
-        if (metadata.width < 800 || metadata.height < 600) {
-            return res.status(400).json({ error: 'Image must be at least 800x600 resolution' });
+        if (metadata.width < 250 || metadata.height < 250) {
+            return res.status(400).json({ error: 'Image must be at least 250x250 resolution' });
         }
 
         const folder = activity === 'Borrow' ? 'borrow-photos' : 'return-photos';

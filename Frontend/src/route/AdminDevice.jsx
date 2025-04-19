@@ -383,17 +383,19 @@ function AdminDevice() {
                 },
                 body: formdata
             });
-            toast.success("SUCCESS!!!");
-
+            
+            console.log("upload Resposne", uploadResponse);
             if (!uploadResponse.ok) {
-                throw new Error("Support file transimision failed");
-            }
-
-            if(uploadResponse.status === 400){
-                toast.error("Image must be at least 800x600 resolution");
+                if(uploadResponse.status === 400){
+                    toast.error("Image must be at least 250 x 250 resolution");
+                }
+                else{
+                    throw new Error("Support file transimision failed");
+                }
             }
             else if(uploadResponse.status === 200){
                 toast.success("Image has been uploaded successfully");
+                toast.success("Successfully returned a device");
             }
             else{
                 throw new Error("Image trannsmission failed");
@@ -411,7 +413,6 @@ function AdminDevice() {
                 throw new Error("Failed to fetch requests");
             }
             const data = await inventoryResponse.json();
-            toast.success("Successfully returned a device");
             setInventoryDeviceList(data.data);
         } catch (error) {
             console.error(error);
@@ -623,7 +624,7 @@ function AdminDevice() {
                                         status: value,
                                         }))
                                     }}
-                                    disabled={["Unavailable"].includes(editDeviceInfo.status)}
+                                    disabled={["Unavailable", "Pending"].includes(editDeviceInfo.status)}
                                     >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select a device status" />
