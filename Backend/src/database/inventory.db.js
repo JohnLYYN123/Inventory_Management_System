@@ -56,28 +56,37 @@ module.exports = {
     // - deviceUserId: Int
     getAllInventories: async (filters = {}) => {
         try {
-            const { deviceName, status, deviceTypeId, deviceUserId } = filters;
-
-            const whereClause = {
-                deviceName: deviceName || undefined,
-                status: status || undefined,
-                deviceTypeId: deviceTypeId || undefined,
-                deviceUserId: deviceUserId || undefined,
-            };
-
-            return await prisma.inventory.findMany({
-                where: whereClause,
-                include: {
-                    requests: true,
-                    transactions: true,
-                    deviceUser: true,
-                },
-            });
-
+          const { deviceName, status, deviceTypeId, deviceUserId } = filters;
+          const whereClause = {
+            // your existing filters, including the "contains" for deviceName
+            deviceName: deviceName
+              ? { contains: deviceName, mode: "insensitive" }
+              : undefined,
+            status: status || undefined,
+            deviceTypeId: deviceTypeId ? Number(deviceTypeId) : undefined,
+            deviceUserId: deviceUserId ? Number(deviceUserId) : undefined,
+          };
+      
+          // fetch with the nested relation
+          const raw = await prisma.inventory.findMany({
+            where: whereClause,
+            include: {
+              deviceType: true,
+              requests: true,
+              transactions: true,
+              deviceUser: true,
+            },
+          });
+      
+          // flatten out the deviceTypeName
+          return raw.map((item) => ({
+            ...item,
+            deviceTypeName: item.deviceType.name,
+          }));
         } catch (error) {
-            throw error;
+          throw error;
         }
-    },
+      },
 
 
     // Updata inventory
