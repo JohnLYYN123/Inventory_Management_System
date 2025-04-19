@@ -95,7 +95,7 @@ To use the system, the backend should be running in one terminal (listening on `
 
 ## Video Demo
 
-https://youtu.be/s59SJR4PlQk
+https://youtu.be/tz7xv1gHA4M
 
 ## Individual Contributions
 
@@ -104,7 +104,7 @@ Each team member contributed to different aspects of the project. The table belo
 | Team Member       | Responsibilities                                                   |
 | ----------------- | ------------------------------------------------------------------ |
 | **Yang Chen**     | Implemented the backend RESTful API using Express.js; designed and structured the relational database schema with **Prisma** and PostgreSQL; handled core backend logic and integration between the database and API routes. |
-| **Yihang Lin**    | Led frontend development using **React**; built the main user-facing pages such as the Login, Registration, and My Devices pages; integrated frontend forms and components with backend API calls to ensure a smooth user experience. |
+| **Yihang Lin**    | Led frontend development using **React**, **Tailwind CSS** and **shadcn/ui** components; built the main user-facing pages such as the Login, Registration, and My Devices pages; integrated frontend forms and components with backend API calls to ensure a smooth user experience. Assisted JWT authentication development and backend API endpoints debugging efforts. Made the demo video|
 | **Yilei Ji**      | Focused on UI/UX design and styling across the application using **Tailwind CSS** and **shadcn/ui** components; trim UI/UX details based on peer review; Connect and test backend APIs to frontend to ensure all features worked; drafted project report as README.md file |
 | **Chujing Yu**    | Developed the user authentication system with **JWT** and implemented authorization middleware on the backend to protect routes; integrated **DigitalOcean Spaces** for file storage (handling file upload and retrieval in request management); managed environment configuration and deployment scripts, and performed testing/debugging across the application. |
 
