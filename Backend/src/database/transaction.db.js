@@ -14,7 +14,7 @@ module.exports = {
                 data: {
                     activity: tsnData.activity,
                     deviceId: tsnData.deviceId,
-                    executor: tsnData.executorId,
+                    executorId: tsnData.executorId,
                     comment: tsnData.comment || undefined,
                 },
                 include: {
