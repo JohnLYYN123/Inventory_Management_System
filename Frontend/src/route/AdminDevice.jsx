@@ -74,7 +74,10 @@ function AdminDevice() {
         deviceType: "",
         status: "Available", 
     });
+
+    // for new device types
     const [newDeviceType, setNewDeviceType] = useState("");
+    const [newDeviceTypeDialog, setNewDeviceTypeDialog] = useState(false);
 
     // For edit device info
     const [editDeviceDialog, setEditDeviceDialog] = useState(false);
@@ -184,6 +187,7 @@ function AdminDevice() {
 
     const isReturnDisabled = !uploadFile || !adminComment;
     const isAddDeviceDisabled = !newDeviceInfo.deviceName || !newDeviceInfo.deviceType || !newDeviceInfo.status;
+    const isAddDeviceTypeDisabled = !newDeviceType;
 
 
     const getDeviceTypes = async () => {
@@ -196,7 +200,6 @@ function AdminDevice() {
                 },
             });
     
-            console.log("response", response);
             if (!response.ok) {
                 throw new Error("Failed to fetch device types");
             }
@@ -218,12 +221,73 @@ function AdminDevice() {
 
             setDeviceTypeMap(deviceTypeMapObj);
             setDeviceTypeMap2(deviceTypeMapObj2);
-
-            console.log("map object", deviceTypeMap);
         } catch (error) {
             console.error("Error fetching device device Types", error);
         }
     };
+
+    
+    const handleAddingNewDeviceTypes = async () => {
+        const deviceTypeInfo = {
+            deviceTypeName: newDeviceType
+        }
+        
+        try {
+            const response = await fetch('http://localhost:3000/api/devicetype', {
+                method: "POST", 
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(deviceTypeInfo)
+            });
+
+            if (!response.ok || response.status !== 201) {
+                if(response.status === 500){
+                    toast.error(`Device type ${newDeviceType} exists in the database`);
+                }
+                throw new Error("Failed to fetch device types");
+            }
+            
+            // get new device types
+            const typeResponse = await fetch(`http://localhost:3000/api/devicetype`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+    
+            if (!typeResponse.ok) {
+                throw new Error("Failed to fetch device types");
+            }
+            const data = await typeResponse.json();
+            setDeviceTypeList(data.data);
+
+            // converting device types list to a map 
+
+            const deviceTypeMapObj = {};
+            const deviceTypeMapObj2 = {};
+            for (let i = 0; i < data.data.length; i++) {
+                const item = await data.data[i];
+                deviceTypeMapObj[item.id] = item.deviceTypeName;
+                deviceTypeMapObj2[item.deviceTypeName] = item.id;
+            }
+        
+            setDeviceTypeMap(deviceTypeMapObj);
+            setDeviceTypeMap2(deviceTypeMapObj2);
+
+            setNewDeviceTypeDialog(false);
+            setNewDeviceType("");
+
+            toast.success("Successful added a device type");
+        } catch(error) {
+            setNewDeviceTypeDialog(false);
+            setNewDeviceType("");
+            console.error(error);
+        }
+        
+    }
 
     const handleAddingNewDevice = async () => {
         const deviceInfo = {
@@ -267,6 +331,12 @@ function AdminDevice() {
         }catch (error){
             console.error(error);
             toast.error("add new device failed");
+            setNewDeviceInfo({
+                deviceName:"", 
+                deviceType: "",
+                status: "Available",
+            });
+            setShowNewDeviceDialog(false);
         }
         setNewDeviceInfo({
             deviceName:"", 
@@ -342,6 +412,8 @@ function AdminDevice() {
             setInventoryDeviceList(data.data);
         } catch (error) {
             console.error(error);
+            setEditDeviceInfo("");
+            setEditDeviceDialog(false);
         }
         setEditDeviceInfo("");
         setEditDeviceDialog(false);
@@ -417,6 +489,9 @@ function AdminDevice() {
         } catch (error) {
             console.error(error);
             toast.error("Error happened during returning the current device");
+            setAdminComment("");
+            setUploadFile(null);
+            setReturnDeviceDialog(false);
         }
         setAdminComment("");
         setUploadFile(null);
@@ -489,7 +564,7 @@ function AdminDevice() {
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
-                                                <Button variant="" className="whitespace-nowrap" onClick={() => alert("TODO: Add new type dialog")}>
+                                                <Button variant="" className="whitespace-nowrap" onClick={() => setNewDeviceTypeDialog(true)}>
                                                     + Add Device Type
                                                 </Button>
                                             </div>
@@ -688,9 +763,36 @@ function AdminDevice() {
                             <DialogFooter className="flex justify-end gap-2 mt-4">
                             <Button variant="ghost" onClick={() => {setReturnDeviceDialog(false); setAdminComment(""); setUploadFile(null);}}>Cancel</Button>
                             <Button variant="buttonBlue" onClick={() => {handleReturnDevice();}} disabled={isReturnDisabled}>
-                                Save
+                                Submit
                             </Button>
                             </DialogFooter>
+                        </DialogContent>
+                        </Dialog>
+                    )}
+                    {newDeviceTypeDialog && (
+                        <Dialog open={newDeviceTypeDialog} onOpenChange={setNewDeviceTypeDialog}>
+                        <DialogContent>
+                            <DialogHeader>
+                            <DialogTitle>Add a New Device Type</DialogTitle>
+                            <DialogDescription>Please enter the new device type name below ... </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-3">
+                            <div>
+                                <Label className="text-md font-medium">New device Type Name: </Label>
+                                <Input 
+                                    type="text"
+                                    placeholder="Please enter a new device name"
+                                    value={newDeviceType}
+                                    onChange={(e) => setNewDeviceType(e.target.value)}
+                                />
+                                </div>
+                            </div>
+                        <DialogFooter className="flex justify-end gap-2 mt-4">
+                        <Button variant="ghost" onClick={() => {setNewDeviceTypeDialog(false); setNewDeviceType("");}}>Cancel</Button>
+                        <Button variant="buttonBlue" onClick={() => {handleAddingNewDeviceTypes()}} disabled={isAddDeviceTypeDisabled}>
+                            Submit
+                        </Button>
+                        </DialogFooter>
                         </DialogContent>
                         </Dialog>
                     )}

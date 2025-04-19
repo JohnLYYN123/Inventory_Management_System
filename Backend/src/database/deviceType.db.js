@@ -15,7 +15,7 @@ module.exports = {
                     deviceTypeName: deviceTypeData.deviceTypeName 
                 },
             });
-
+            
             if (existingDeviceType) {
                 throw new Error("Device Type already exist");
             }
