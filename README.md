@@ -3,10 +3,10 @@
 
 ## Team Information
 
-- **Yang Chen** (999551783) – student1@example.com  
-- **Yihang Lin** (1006130447) – student2@example.com  
-- **Yilei Ji** (1009219329) – student3@example.com  
-- **Chujing Yu** (1010809608) – student4@example.com  
+- **Yang Chen** (999551783) – robbie.chen@mail.utoronto.ca
+- **Yihang Lin** (1006130447) – yihang.lin@mail.utoronto.ca 
+- **Yilei Ji** (1009219329) – yilejig@gmail.com  
+- **Chujing Yu** (1010809608) – chujing.yu@mail.utoronto.ca
 
 ## Motivation
 
@@ -92,6 +92,10 @@ If all steps were followed correctly, you now have the IMS running locally. You 
 This application is **not currently deployed** to a cloud hosting platform; it is intended to be run locally for the purposes of the course project. Both the backend and frontend run on the developer’s machine on their respective ports (3000 for the server API and 5174 for the web client). 
 
 To use the system, the backend should be running in one terminal (listening on `localhost:3000`) and the frontend in another (serving the React app on `localhost:5174`). Then, accessing the frontend URL in a browser will allow you to interact with the application, while it sends API calls to the local backend. If deployment were required in the future, the team would consider deploying the backend (Express/Node.js) on a platform like Heroku or DigitalOcean App Platform and hosting the frontend as a static site (for example, on Vercel or GitHub Pages), configuring the API base URLs accordingly. For now, all testing and usage are done on the local environment.
+
+## Video Demo
+
+https://youtu.be/s59SJR4PlQk
 
 ## Individual Contributions
 
